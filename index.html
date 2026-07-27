@@ -1365,9 +1365,24 @@ function renderDayDetail() {
 
 // ==================== INTERACTIONS ====================
 function openNav(name, lng, lat) {
-  // 高德地图URI Scheme — 直接唤起App导航
-  const uri = `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&callnative=1`;
-  window.open(uri, '_blank');
+  // 使用高德原生Scheme直接唤起App导航
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let uri;
+  if (isIOS) {
+    uri = `iosamap://path?sourceApplication=新疆gogogo&dlat=${lat}&dlon=${lng}&dname=${encodeURIComponent(name)}&dev=0&t=0`;
+  } else {
+    uri = `androidamap://navi?sourceApplication=新疆gogogo&poiname=${encodeURIComponent(name)}&lat=${lat}&lon=${lng}&dev=0&style=2`;
+  }
+  // 同时设置H5降级链接
+  const fallback = `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&callnative=1`;
+  // 尝试唤起App，2秒后如果没唤起则跳H5
+  const startTime = Date.now();
+  window.location.href = uri;
+  setTimeout(() => {
+    if (Date.now() - startTime < 2500) {
+      window.open(fallback, '_blank');
+    }
+  }, 2000);
 }
 
 function switchView(view) {
@@ -1497,23 +1512,33 @@ function openEditModal(section, index) {
     if (index === -1) {
       title = `添加导航点 - ${day.label}`;
       body = `
+        <label class="modal-label">📍 高德分享链接 <span style="font-weight:400;color:var(--text-muted);">（推荐）</span></label>
+        <input class="modal-input" id="edit-nav-link" placeholder="粘贴高德地图分享链接，自动解析">
+        <button type="button" class="btn-save" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick="parseNavLink()">🔍 解析链接</button>
+        <div id="parse-result" style="margin-top:6px;font-size:var(--font-xs);color:var(--text-secondary);"></div>
         <label class="modal-label">点位名称</label>
         <input class="modal-input" id="edit-nav-name" placeholder="如：喀纳斯景区大门">
         <label class="modal-label">经度 (lng)</label>
         <input class="modal-input" id="edit-nav-lng" placeholder="如：87.1445">
         <label class="modal-label">纬度 (lat)</label>
-        <input class="modal-input" id="edit-nav-lat" placeholder="如：48.5056">`;
+        <input class="modal-input" id="edit-nav-lat" placeholder="如：48.5056">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">💡 在高德地图App中搜索地点 → 分享 → 复制链接 → 粘贴到上方自动解析</div>`;
       footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('navPoint',-1)">添加</button>`;
     } else {
       const pt = day.navPoints[index];
       title = `编辑导航点 - ${day.label}`;
       body = `
+        <label class="modal-label">📍 高德分享链接 <span style="font-weight:400;color:var(--text-muted);">（推荐）</span></label>
+        <input class="modal-input" id="edit-nav-link" placeholder="粘贴高德地图分享链接，自动解析">
+        <button type="button" class="btn-save" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick="parseNavLink()">🔍 解析链接</button>
+        <div id="parse-result" style="margin-top:6px;font-size:var(--font-xs);color:var(--text-secondary);"></div>
         <label class="modal-label">点位名称</label>
         <input class="modal-input" id="edit-nav-name" value="${escapeHtml(pt.name)}">
         <label class="modal-label">经度 (lng)</label>
         <input class="modal-input" id="edit-nav-lng" value="${pt.lng}">
         <label class="modal-label">纬度 (lat)</label>
-        <input class="modal-input" id="edit-nav-lat" value="${pt.lat}">`;
+        <input class="modal-input" id="edit-nav-lat" value="${pt.lat}">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">💡 在高德地图App中搜索地点 → 分享 → 复制链接 → 粘贴到上方自动解析</div>`;
       footer = `<button class="btn-delete" onclick="deleteNavPoint(${index})">删除</button><button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('navPoint',${index})">保存</button>`;
     }
   }
@@ -1601,6 +1626,78 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// Parse Amap share link to extract name and coordinates
+async function parseNavLink() {
+  const link = document.getElementById('edit-nav-link').value.trim();
+  const resultEl = document.getElementById('parse-result');
+  if (!link) { resultEl.textContent = '⚠️ 请先粘贴高德分享链接'; return; }
+
+  resultEl.textContent = '🔍 正在解析...';
+
+  try {
+    // Pattern 1: surl.amap.com short link
+    let url = link;
+    if (url.includes('surl.amap.com') || url.includes('amap.com/') && !url.includes('restapi')) {
+      // Try to fetch and follow redirect to get final URL
+      const resp = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+      url = resp.url;
+    }
+
+    // Pattern 2: Extract lng, lat from URL
+    // Formats: ...?lng=xxx&lat=xxx or .../lng,lat/... or ...@lng,lat,...
+    let lng = null, lat = null, name = '';
+
+    // Try @lng,lat,zoom format (高德短链接重定向后常见)
+    const atMatch = url.match(/@([\d.]+),([\d.]+),/);
+    if (atMatch) {
+      lng = parseFloat(atMatch[1]);
+      lat = parseFloat(atMatch[2]);
+    }
+
+    // Try lng=xxx&lat=xxx
+    if (!lng) {
+      const paramMatch = url.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
+      if (paramMatch) { lng = parseFloat(paramMatch[1]); lat = parseFloat(paramMatch[2]); }
+    }
+
+    // Try /lng,lat/ in path
+    if (!lng) {
+      const pathMatch = url.match(/\/([\d.]+),([\d.]+)\//);
+      if (pathMatch) { lng = parseFloat(pathMatch[1]); lat = parseFloat(pathMatch[2]); }
+    }
+
+    // Try to get name from poiname or title params
+    const nameMatch = url.match(/[?&](?:poiname|name|title)=([^&]+)/i);
+    if (nameMatch) { name = decodeURIComponent(nameMatch[1]); }
+
+    if (lng && lat) {
+      document.getElementById('edit-nav-lng').value = lng;
+      document.getElementById('edit-nav-lat').value = lat;
+      if (name && !document.getElementById('edit-nav-name').value) {
+        document.getElementById('edit-nav-name').value = name;
+      }
+      resultEl.innerHTML = `✅ 解析成功！坐标: ${lng}, ${lat} ${name ? '· ' + name : ''}`;
+      resultEl.style.color = 'var(--primary-green)';
+    } else {
+      // Try Amap POI search API to resolve the link
+      resultEl.innerHTML = '⚠️ 无法从链接中解析坐标，请手动输入。提示：在高德App中长按地点 → 分享 → 复制链接，粘贴后重试。';
+      resultEl.style.color = 'var(--desert-orange)';
+    }
+  } catch (e) {
+    // Fallback: try regex on original link
+    const atMatch = link.match(/@([\d.]+),([\d.]+),/);
+    if (atMatch) {
+      document.getElementById('edit-nav-lng').value = atMatch[1];
+      document.getElementById('edit-nav-lat').value = atMatch[2];
+      resultEl.innerHTML = `✅ 解析成功！坐标: ${atMatch[1]}, ${atMatch[2]}`;
+      resultEl.style.color = 'var(--primary-green)';
+    } else {
+      resultEl.innerHTML = '⚠️ 解析失败，请确认是高德地图分享链接，或手动输入坐标。';
+      resultEl.style.color = 'var(--sunset-red)';
+    }
+  }
 }
 
 // ==================== INIT ====================
