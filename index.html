@@ -423,6 +423,8 @@ body::before {
 .nav-btn-icon { font-size: 16px; }
 .nav-btn-dest { background: var(--primary-green); box-shadow: 0 2px 8px rgba(74,156,108,0.3); }
 .nav-btn-dest:hover { background: #3d8859; box-shadow: 0 4px 12px rgba(74,156,108,0.4); }
+.nav-btn-mini { padding: 4px 10px; font-size: 11px; width: 100%; justify-content: center; background: var(--sky-blue); box-shadow: none; }
+.nav-btn-mini:hover { background: #4a89c0; }
 
 /* Reservation Card */
 .reservation-card { background: var(--desert-orange-light); border-radius: var(--radius-md); padding: 14px 16px; margin-top: 16px; border-left: 4px solid var(--desert-orange); }
@@ -1336,10 +1338,10 @@ function renderDayDetail() {
     html += '<div class="info-grid">';
     day.meals.forEach((meal, idx) => {
       const mc = meal.type.includes('午') || meal.type.includes('简') ? 'lunch' : 'dinner';
-      html += `<div class="info-card ${mc}"><div class="info-card-label">🍽️ ${meal.type} <button class="edit-btn" onclick="openEditModal('meal',${idx})" title="编辑">✎</button></div><div class="info-card-name">${meal.name}</div><div class="info-card-dishes">${meal.dishes}</div></div>`;
+      html += `<div class="info-card ${mc}"><div class="info-card-label">🍽️ ${meal.type} <button class="edit-btn" onclick="openEditModal('meal',${idx})" title="编辑">✎</button></div><div class="info-card-name">${meal.name}</div><div class="info-card-dishes">${meal.dishes}</div>${meal.navLng ? `<button class="nav-btn nav-btn-mini" style="margin-top:6px;" onclick="openNav('${meal.name.replace(/'/g, "\\'")}', ${meal.navLng}, ${meal.navLat})">🧭 导航到此</button>` : ''}</div>`;
     });
     if (day.accommodation) {
-      html += `<div class="info-card hotel"><div class="info-card-label">🏨 住宿 <button class="edit-btn" onclick="openEditModal('hotel')" title="编辑">✎</button></div><div class="info-card-name">${day.accommodation.name}</div><div class="info-card-dishes">${day.accommodation.notes || ''}</div></div>`;
+      html += `<div class="info-card hotel"><div class="info-card-label">🏨 住宿 <button class="edit-btn" onclick="openEditModal('hotel')" title="编辑">✎</button></div><div class="info-card-name">${day.accommodation.name}</div><div class="info-card-dishes">${day.accommodation.notes || ''}</div>${day.accommodation.navLng ? `<button class="nav-btn nav-btn-mini" style="margin-top:6px;" onclick="openNav('${day.accommodation.name.replace(/'/g, "\\'")}', ${day.accommodation.navLng}, ${day.accommodation.navLat})">🧭 导航到此</button>` : ''}</div>`;
     }
     html += '</div>';
   }
@@ -1498,7 +1500,18 @@ function openEditModal(section, index) {
       <label class="modal-label">餐厅名称</label>
       <input class="modal-input" id="edit-meal-name" value="${escapeHtml(meal.name)}">
       <label class="modal-label">菜品</label>
-      <textarea class="modal-textarea" id="edit-meal-dishes">${escapeHtml(meal.dishes)}</textarea>`;
+      <textarea class="modal-textarea" id="edit-meal-dishes">${escapeHtml(meal.dishes)}</textarea>
+      <div style="border-top:1px solid var(--border-light);margin:12px 0 8px;"></div>
+      <label class="modal-label">🧭 导航坐标（可选，填了才能一键导航）</label>
+      <div style="display:flex;gap:6px;">
+        <input class="modal-input" id="edit-meal-nav-search" placeholder="搜索餐厅名称" style="flex:1;">
+        <button type="button" class="btn-save" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="searchMealHotelPOI('meal')">搜索</button>
+      </div>
+      <div id="meal-poi-results" style="margin-top:6px;max-height:120px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <input class="modal-input" id="edit-meal-lng" placeholder="经度" value="${meal.navLng || ''}" style="flex:1;">
+        <input class="modal-input" id="edit-meal-lat" placeholder="纬度" value="${meal.navLat || ''}" style="flex:1;">
+      </div>`;
     footer = `<button class="btn-delete" onclick="deleteMeal(${index})">删除</button><button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('meal',${index})">保存</button>`;
   } else if (section === 'hotel') {
     const hotel = day.accommodation;
@@ -1507,7 +1520,18 @@ function openEditModal(section, index) {
       <label class="modal-label">酒店名称</label>
       <input class="modal-input" id="edit-hotel-name" value="${escapeHtml(hotel.name)}">
       <label class="modal-label">备注</label>
-      <textarea class="modal-textarea" id="edit-hotel-notes">${escapeHtml(hotel.notes || '')}</textarea>`;
+      <textarea class="modal-textarea" id="edit-hotel-notes">${escapeHtml(hotel.notes || '')}</textarea>
+      <div style="border-top:1px solid var(--border-light);margin:12px 0 8px;"></div>
+      <label class="modal-label">🧭 导航坐标（可选，填了才能一键导航）</label>
+      <div style="display:flex;gap:6px;">
+        <input class="modal-input" id="edit-hotel-nav-search" placeholder="搜索酒店名称" style="flex:1;">
+        <button type="button" class="btn-save" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="searchMealHotelPOI('hotel')">搜索</button>
+      </div>
+      <div id="hotel-poi-results" style="margin-top:6px;max-height:120px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <input class="modal-input" id="edit-hotel-lng" placeholder="经度" value="${hotel.navLng || ''}" style="flex:1;">
+        <input class="modal-input" id="edit-hotel-lat" placeholder="纬度" value="${hotel.navLat || ''}" style="flex:1;">
+      </div>`;
     footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('hotel')">保存</button>`;
   } else if (section === 'navPoint') {
     if (index === -1) {
@@ -1595,9 +1619,17 @@ function saveEdit(section, index) {
     day.meals[index].type = document.getElementById('edit-meal-type').value.trim() || day.meals[index].type;
     day.meals[index].name = document.getElementById('edit-meal-name').value.trim() || day.meals[index].name;
     day.meals[index].dishes = document.getElementById('edit-meal-dishes').value.trim() || day.meals[index].dishes;
+    const mlng = parseFloat(document.getElementById('edit-meal-lng').value);
+    const mlat = parseFloat(document.getElementById('edit-meal-lat').value);
+    if (!isNaN(mlng) && !isNaN(mlat)) { day.meals[index].navLng = mlng; day.meals[index].navLat = mlat; }
+    else { delete day.meals[index].navLng; delete day.meals[index].navLat; }
   } else if (section === 'hotel') {
     day.accommodation.name = document.getElementById('edit-hotel-name').value.trim() || day.accommodation.name;
     day.accommodation.notes = document.getElementById('edit-hotel-notes').value.trim();
+    const hlng = parseFloat(document.getElementById('edit-hotel-lng').value);
+    const hlat = parseFloat(document.getElementById('edit-hotel-lat').value);
+    if (!isNaN(hlng) && !isNaN(hlat)) { day.accommodation.navLng = hlng; day.accommodation.navLat = hlat; }
+    else { delete day.accommodation.navLng; delete day.accommodation.navLat; }
   } else if (section === 'navPoint') {
     const nameVal = document.getElementById('edit-nav-name').value.trim();
     const lngVal = parseFloat(document.getElementById('edit-nav-lng').value);
@@ -1684,8 +1716,39 @@ async function searchAmapPOI() {
   }
 }
 
-// Select a POI from search results
-function selectPOI(name, lng, lat) {
+// Search POI for meal or hotel
+async function searchMealHotelPOI(type) {
+  const searchEl = document.getElementById(type === 'meal' ? 'edit-meal-nav-search' : 'edit-hotel-nav-search');
+  const resultsEl = document.getElementById(type === 'meal' ? 'meal-poi-results' : 'hotel-poi-results');
+  const keyword = searchEl.value.trim();
+  if (!keyword) { resultsEl.innerHTML = '<div style="font-size:11px;color:var(--desert-orange);">请输入名称</div>'; return; }
+
+  resultsEl.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">🔍 搜索中...</div>';
+  try {
+    const url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}&output=json&offset=5`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data.status === '1' && data.pois && data.pois.length > 0) {
+      let html = '';
+      data.pois.forEach(poi => {
+        const loc = poi.location.split(',');
+        html += `<div onclick="selectMealHotelPOI('${type}','${loc[0]}','${loc[1]}')" style="padding:6px 8px;margin:3px 0;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;" onmouseover="this.style.borderColor='var(--primary-green)';this.style.background='var(--primary-green-light)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'"><strong>${poi.name}</strong> <span style="color:var(--text-muted);">${loc[0]},${loc[1]}</span></div>`;
+      });
+      resultsEl.innerHTML = html;
+    } else {
+      resultsEl.innerHTML = '<div style="font-size:11px;color:var(--desert-orange);">未找到</div>';
+    }
+  } catch (e) {
+    resultsEl.innerHTML = '<div style="font-size:11px;color:var(--sunset-red);">搜索失败</div>';
+  }
+}
+
+function selectMealHotelPOI(type, lng, lat) {
+  document.getElementById(type === 'meal' ? 'edit-meal-lng' : 'edit-hotel-lng').value = lng;
+  document.getElementById(type === 'meal' ? 'edit-meal-lat' : 'edit-hotel-lat').value = lat;
+  const resultsEl = document.getElementById(type === 'meal' ? 'meal-poi-results' : 'hotel-poi-results');
+  resultsEl.innerHTML = '<div style="font-size:11px;color:var(--primary-green);">✅ 已选 (' + lng + ',' + lat + ')</div>';
+}
   document.getElementById('edit-nav-name').value = name;
   document.getElementById('edit-nav-lng').value = lng;
   document.getElementById('edit-nav-lat').value = lat;
