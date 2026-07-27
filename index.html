@@ -1758,6 +1758,9 @@ function selectMealHotelPOI(type, lng, lat) {
   const resultsEl = document.getElementById(type === 'meal' ? 'meal-poi-results' : 'hotel-poi-results');
   resultsEl.innerHTML = '<div style="font-size:11px;color:var(--primary-green);">✅ 已选 (' + lng + ',' + lat + ')</div>';
 }
+
+// Select a POI from search results
+function selectPOI(name, lng, lat) {
   document.getElementById('edit-nav-name').value = name;
   document.getElementById('edit-nav-lng').value = lng;
   document.getElementById('edit-nav-lat').value = lat;
