@@ -2,7 +2,14 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="新疆gogogo">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#4a9c6c">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>新疆gogogo - 9天北疆自驾</title>
 <style>
 /* ===== CSS Variables ===== */
@@ -888,16 +895,18 @@ function loadTripData() {
     const raw = localStorage.getItem('travel_workbench_trip_data');
     if (raw) {
       const saved = JSON.parse(raw);
-      // Deep merge: use saved days, but keep default meta/monitoredRoads/monitoredCities/bookingTable/travelTips
-      return {
-        meta: DEFAULT_TRIP_DATA.meta,
-        monitoredCities: DEFAULT_TRIP_DATA.monitoredCities,
-        days: saved.days || DEFAULT_TRIP_DATA.days,
-        bookingTable: DEFAULT_TRIP_DATA.bookingTable,
-        travelTips: DEFAULT_TRIP_DATA.travelTips
-      };
+      // Validate saved data structure
+      if (saved && saved.days && Array.isArray(saved.days) && saved.days.length === DEFAULT_TRIP_DATA.days.length) {
+        return {
+          meta: DEFAULT_TRIP_DATA.meta,
+          monitoredCities: DEFAULT_TRIP_DATA.monitoredCities,
+          days: saved.days,
+          bookingTable: DEFAULT_TRIP_DATA.bookingTable,
+          travelTips: DEFAULT_TRIP_DATA.travelTips
+        };
+      }
     }
-  } catch (e) { /* fall through to default */ }
+  } catch (e) { /* ignore */ }
   return JSON.parse(JSON.stringify(DEFAULT_TRIP_DATA));
 }
 
@@ -1808,10 +1817,47 @@ async function parseAmapLink() {
   }
 }
 
+// ==================== DISABLE ZOOM ====================
+// 防止双指缩放
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+// 防止双击放大
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+// 防止双指缩放（iOS Safari）
+document.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+// 防止 Ctrl+滚轮缩放
+document.addEventListener('wheel', (e) => {
+  if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+
 // ==================== INIT ====================
 async function init() {
-  tripData = loadTripData();
-  renderOverview();
+  // Safety: clear corrupted localStorage data
+  try {
+    const raw = localStorage.getItem('travel_workbench_trip_data');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (!saved || !saved.days || !Array.isArray(saved.days) || saved.days.length !== DEFAULT_TRIP_DATA.days.length) {
+        localStorage.removeItem('travel_workbench_trip_data');
+      }
+    }
+  } catch(e) { localStorage.removeItem('travel_workbench_trip_data'); }
+
+  try {
+    tripData = loadTripData();
+    renderOverview();
+  } catch(e) {
+    console.error('Render error:', e);
+    localStorage.removeItem('travel_workbench_trip_data');
+    tripData = JSON.parse(JSON.stringify(DEFAULT_TRIP_DATA));
+    renderOverview();
+  }
   await refreshLiveData();
 
   // Auto-refresh every 10 minutes
