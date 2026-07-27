@@ -1418,7 +1418,8 @@ function changeDay(delta) {
   if (ni < 0 || ni >= tripData.days.length) return;
   currentDayIndex = ni;
   renderDayDetail();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // 切换日期后滚动到页面最顶部，确保日期导航栏可见
+  window.scrollTo(0, 0);
 }
 
 function jumpToDay(indexStr) {
@@ -1430,8 +1431,8 @@ function navigateToDay(index) {
   currentDayIndex = index;
   switchView('detail');
   setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, 100);
+    window.scrollTo(0, 0);
+  }, 50);
 }
 
 // Keyboard shortcuts
