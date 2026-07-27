@@ -425,6 +425,112 @@ body {
 /* Footer */
 .app-footer { text-align: center; padding: 24px 16px; color: var(--text-muted); font-size: var(--font-xs); }
 
+/* ============ EDIT BUTTONS ============ */
+.edit-btn {
+  background: none; border: 1px solid var(--border); color: var(--text-muted);
+  cursor: pointer; font-size: 12px; padding: 2px 8px;
+  border-radius: var(--radius-full); opacity: 0; transition: var(--transition-fast);
+  margin-left: 6px; font-weight: 500;
+}
+.timeline-event:hover .edit-btn,
+.event-card:hover .edit-btn,
+.info-card:hover .edit-btn,
+.day-header-card:hover .edit-btn { opacity: 1; }
+.edit-btn:hover { background: var(--primary-green-light); border-color: var(--primary-green); color: var(--primary-green); }
+.edit-btn.danger:hover { background: var(--sunset-red-light); border-color: var(--sunset-red); color: var(--sunset-red); }
+
+.edit-btn-inline {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px; margin-left: 4px; vertical-align: middle;
+}
+
+.add-event-btn {
+  display: block; width: 100%; padding: 10px; margin-top: 12px;
+  border: 2px dashed var(--border); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-muted); font-size: var(--font-sm);
+  cursor: pointer; transition: var(--transition-fast); text-align: center;
+}
+.add-event-btn:hover { border-color: var(--primary-green); color: var(--primary-green); background: var(--primary-green-light); }
+
+/* ============ MODAL ============ */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s ease;
+  padding: 16px;
+}
+.modal {
+  background: var(--card-bg); border-radius: var(--radius-lg);
+  width: 100%; max-width: 480px; max-height: 85vh;
+  overflow-y: auto; box-shadow: var(--shadow-lg);
+}
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--card-bg); z-index: 1;
+}
+.modal-title { font-weight: 700; font-size: var(--font-base); }
+.modal-close {
+  background: none; border: none; font-size: 20px; color: var(--text-muted);
+  cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm);
+}
+.modal-close:hover { background: var(--bg); color: var(--text-primary); }
+.modal-body { padding: 16px 20px; }
+.modal-footer {
+  padding: 12px 20px; border-top: 1px solid var(--border-light);
+  display: flex; gap: 8px; justify-content: flex-end;
+  position: sticky; bottom: 0; background: var(--card-bg);
+}
+.modal-label {
+  display: block; font-size: var(--font-xs); font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 4px; margin-top: 12px;
+}
+.modal-label:first-child { margin-top: 0; }
+.modal-input, .modal-textarea, .modal-select {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: var(--font-sm);
+  font-family: inherit; color: var(--text-primary); background: var(--bg);
+  transition: var(--transition-fast);
+}
+.modal-input:focus, .modal-textarea:focus, .modal-select:focus {
+  outline: none; border-color: var(--primary-green); box-shadow: 0 0 0 3px var(--primary-green-light);
+}
+.modal-textarea { min-height: 60px; resize: vertical; }
+.modal-select { cursor: pointer; }
+
+.btn-save {
+  padding: 8px 20px; background: var(--primary-green); color: #fff;
+  border: none; border-radius: var(--radius-full); font-size: var(--font-sm);
+  font-weight: 600; cursor: pointer; transition: var(--transition-fast);
+}
+.btn-save:hover { background: #3d8859; }
+.btn-cancel {
+  padding: 8px 20px; background: var(--bg); color: var(--text-secondary);
+  border: 1px solid var(--border); border-radius: var(--radius-full);
+  font-size: var(--font-sm); cursor: pointer; transition: var(--transition-fast);
+}
+.btn-cancel:hover { border-color: var(--text-secondary); }
+.btn-delete {
+  padding: 8px 20px; background: var(--sunset-red); color: #fff;
+  border: none; border-radius: var(--radius-full); font-size: var(--font-sm);
+  font-weight: 600; cursor: pointer; transition: var(--transition-fast);
+  margin-right: auto;
+}
+.btn-delete:hover { background: #c43a4d; }
+
+/* Day group header */
+.day-group-header {
+  font-size: var(--font-sm); font-weight: 700; color: var(--primary-green);
+  padding: 8px 0 4px; margin-top: 4px;
+  border-bottom: 2px solid var(--primary-green-light);
+}
+.day-group-header:first-child { margin-top: 0; }
+.day-sub-label {
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  margin: 6px 0 4px;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .info-grid { grid-template-columns: 1fr; }
@@ -460,6 +566,18 @@ body {
   <div id="view-detail" class="view"></div>
 </main>
 
+<!-- ===== Edit Modal ===== -->
+<div id="edit-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">编辑</span>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
 <footer class="app-footer">北疆自驾旅行计划 · 实时交通+天气 · 高德地图导航</footer>
 
 <script>
@@ -467,8 +585,8 @@ body {
 const AMAP_KEY = '105fd952df7e80ed9eab6ef457a7d51d';
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
-// ==================== TRIP DATA ====================
-const TRIP_DATA = {
+// ==================== TRIP DATA (editable + persisted) ====================
+const DEFAULT_TRIP_DATA = {
   meta: {
     title: '9天北疆自驾环线',
     dateRange: '2025年7月31日 - 8月9日',
@@ -743,6 +861,7 @@ const TRIP_DATA = {
 };
 
 // ==================== STATE ====================
+let tripData;
 let currentView = 'overview';
 let currentDayIndex = 0;
 let liveNotifications = [];
@@ -751,8 +870,33 @@ let nextManualId = Date.now();
 let isRefreshing = false;
 let lastRefreshTime = null;
 let refreshError = null;
+// Edit modal state
+let editTarget = null; // { dayIdx, section, index }
 
 // ==================== LOCAL STORAGE ====================
+function loadTripData() {
+  try {
+    const raw = localStorage.getItem('travel_workbench_trip_data');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      // Deep merge: use saved days, but keep default meta/monitoredRoads/monitoredCities/bookingTable/travelTips
+      return {
+        meta: DEFAULT_TRIP_DATA.meta,
+        monitoredRoads: DEFAULT_TRIP_DATA.monitoredRoads,
+        monitoredCities: DEFAULT_TRIP_DATA.monitoredCities,
+        days: saved.days || DEFAULT_TRIP_DATA.days,
+        bookingTable: DEFAULT_TRIP_DATA.bookingTable,
+        travelTips: DEFAULT_TRIP_DATA.travelTips
+      };
+    }
+  } catch (e) { /* fall through to default */ }
+  return JSON.parse(JSON.stringify(DEFAULT_TRIP_DATA));
+}
+
+function saveTripData() {
+  localStorage.setItem('travel_workbench_trip_data', JSON.stringify({ days: tripData.days }));
+}
+
 function loadManualNotifications() {
   try {
     const raw = localStorage.getItem('travel_workbench_manual_notifs');
@@ -766,10 +910,12 @@ function saveManualNotifications() {
 
 // ==================== LIVE DATA FETCHING ====================
 
-// Fetch traffic conditions from Amap Traffic API
+// Fetch traffic conditions from Amap Traffic API (with day info)
 async function fetchTrafficStatus() {
   const results = [];
-  for (const road of TRIP_DATA.monitoredRoads) {
+  for (const road of tripData.monitoredRoads) {
+    const day = tripData.days[road.dayIdx];
+    const dayLabel = day ? `${day.label} · ${day.date} · ${day.route}` : '';
     try {
       const url = `https://restapi.amap.com/v3/traffic/status/circle?key=${AMAP_KEY}&location=${road.lng},${road.lat}&radius=10000&extensions=all`;
       const resp = await fetch(url);
@@ -779,57 +925,42 @@ async function fetchTrafficStatus() {
         const desc = data.trafficinfo.description || '';
         const evalInfo = data.trafficinfo.evaluation;
         const expedite = evalInfo?.expedite || '';
-        const congested = evalInfo?.congested || '';
-        const blocked = evalInfo?.blocked || '';
 
         let status = 'normal';
         let icon = '🟢';
 
-        if (desc.includes('拥堵') || desc.includes('缓行')) {
-          status = 'warning';
-          icon = '🟡';
-        }
-        if (desc.includes('严重拥堵') || desc.includes('封闭') || desc.includes('管制')) {
-          status = 'danger';
-          icon = '🔴';
-        }
+        if (desc.includes('拥堵') || desc.includes('缓行')) { status = 'warning'; icon = '🟡'; }
+        if (desc.includes('严重拥堵') || desc.includes('封闭') || desc.includes('管制')) { status = 'danger'; icon = '🔴'; }
 
-        let content = desc
-          ? `${icon} ${desc}`
-          : `${icon} 路况畅通`;
-
+        let content = desc ? `${icon} ${desc}` : `${icon} 路况畅通`;
         if (expedite) content += ` · 畅通${expedite}`;
 
         results.push({
-          id: `traffic-${road.name}`,
-          type: 'traffic',
-          title: road.name,
+          id: `traffic-${road.name}`, type: 'traffic',
+          title: `${road.name}`,
           content,
           time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto',
-          status
+          source: 'auto', status,
+          dayIdx: road.dayIdx, dayLabel
         });
       } else {
-        // API returned but no trafficinfo (remote area, no data coverage)
         results.push({
-          id: `traffic-${road.name}`,
-          type: 'traffic',
+          id: `traffic-${road.name}`, type: 'traffic',
           title: road.name,
-          content: '🔵 该区域暂无实时路况覆盖（偏远路段）',
+          content: '🔵 该区域暂无实时路况覆盖',
           time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto',
-          status: 'normal'
+          source: 'auto', status: 'normal',
+          dayIdx: road.dayIdx, dayLabel
         });
       }
     } catch (e) {
       results.push({
-        id: `traffic-${road.name}`,
-        type: 'traffic',
+        id: `traffic-${road.name}`, type: 'traffic',
         title: road.name,
-        content: '⚠️ 路况数据获取失败，请手动确认',
+        content: '⚠️ 路况数据获取失败',
         time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-        source: 'auto',
-        status: 'unknown'
+        source: 'auto', status: 'unknown',
+        dayIdx: road.dayIdx, dayLabel
       });
     }
   }
@@ -867,9 +998,11 @@ async function fetchQWeatherData() {
   const results = [];
   const seen = new Set();
 
-  for (const city of TRIP_DATA.monitoredCities) {
+  for (const city of tripData.monitoredCities) {
     if (seen.has(city.locationId)) continue;
     seen.add(city.locationId);
+    const day = tripData.days[city.dayIdx];
+    const dayLabel = day ? `${day.label} · ${day.date}` : '';
 
     try {
       const nowUrl = `https://devapi.qweather.com/v7/weather/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
@@ -890,7 +1023,8 @@ async function fetchQWeatherData() {
           title: `${city.name} · ${n.temp}°C`,
           content: `${alertIcon}${desc} | 体感${n.feelsLike}°C | ${n.windDir}${n.windSpeed}km/h | 湿度${n.humidity}% | 能见度${n.vis}km`,
           time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto', status, temp: n.temp, desc
+          source: 'auto', status, temp: n.temp, desc,
+          dayIdx: city.dayIdx, dayLabel
         });
       }
     } catch (e) { /* skip on error */ }
@@ -898,8 +1032,11 @@ async function fetchQWeatherData() {
 
   // Fetch warnings
   const warned = new Set();
-  for (const city of TRIP_DATA.monitoredCities) {
+  for (const city of tripData.monitoredCities) {
     if (warned.has(city.locationId)) continue;
+    warned.add(city.locationId);
+    const day = tripData.days[city.dayIdx];
+    const dayLabel = day ? `${day.label} · ${day.date}` : '';
     warned.add(city.locationId);
     try {
       const warnUrl = `https://devapi.qweather.com/v7/warning/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
@@ -913,7 +1050,8 @@ async function fetchQWeatherData() {
             title: `${sev[w.severity] === 'danger' ? '🚨' : '⚠️'} ${city.name} · ${w.typeName}${w.severity}预警`,
             content: `${w.title} | ${w.text.substring(0, 80)}...`,
             time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-            source: 'auto', status: sev[w.severity] || 'warning'
+            source: 'auto', status: sev[w.severity] || 'warning',
+            dayIdx: city.dayIdx, dayLabel
           });
         }
       }
@@ -928,9 +1066,11 @@ async function fetchFallbackWeatherData() {
   const results = [];
   const seen = new Set();
 
-  for (const city of TRIP_DATA.monitoredCities) {
+  for (const city of tripData.monitoredCities) {
     if (seen.has(city.name)) continue;
     seen.add(city.name);
+    const day = tripData.days[city.dayIdx];
+    const dayLabel = day ? `${day.label} · ${day.date}` : '';
 
     try {
       const resp = await fetch(`https://wttr.in/${encodeURIComponent(city.name)}?format=j1&lang=zh`);
@@ -947,7 +1087,8 @@ async function fetchFallbackWeatherData() {
           title: `${city.name} · ${cur.temp_C}°C`,
           content: `${alertIcon}${desc} | 风力: ${cur.winddir16Point} ${cur.windspeedKmph}km/h | 湿度: ${cur.humidity}%`,
           time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto', status, temp: cur.temp_C, desc
+          source: 'auto', status, temp: cur.temp_C, desc,
+          dayIdx: city.dayIdx, dayLabel
         });
       }
     } catch (e) { /* skip */ }
@@ -1035,9 +1176,9 @@ function renderNotificationPanel() {
     html += `<div class="error-banner">⚠️ ${refreshError} <button class="btn-refresh" onclick="refreshLiveData()" style="margin-left:auto;">重试</button></div>`;
   }
 
-  // === AUTO-DETECTED (LIVE) ===
+  // === AUTO-DETECTED (LIVE) — Grouped by Day ===
   html += '<div class="notif-section">';
-  html += '<div class="notif-section-header">🤖 实时自动检测 <span class="notif-section-badge live">自动</span>';
+  html += '<div class="notif-section-header">🤖 实时自动检测（按天排列）<span class="notif-section-badge live">自动</span>';
   if (dangerCount > 0) html += `<span style="color:var(--sunset-red);font-size:11px;margin-left:4px;">${dangerCount}项异常</span>`;
   if (warningCount > 0) html += `<span style="color:var(--desert-orange);font-size:11px;margin-left:4px;">${warningCount}项需关注</span>`;
   html += '</div>';
@@ -1047,41 +1188,64 @@ function renderNotificationPanel() {
   } else if (allLive.length === 0) {
     html += '<div class="empty-notif">正在加载实时数据...</div>';
   } else {
-    // Traffic section
-    if (trafficNotifs.length > 0) {
-      html += '<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px;">🚗 交通路况</div>';
-      html += '<ul class="notif-list">';
-      trafficNotifs.forEach(n => {
-        html += `
-        <li class="notif-item">
-          <div class="notif-icon ${n.type}">🚗</div>
-          <div class="notif-body">
-            <div class="notif-item-title">${n.title} <span class="notif-source auto">自动检测</span></div>
-            <div class="notif-item-content">${n.content}</div>
-          </div>
-          <span class="notif-time">${n.time}</span>
-        </li>`;
-      });
-      html += '</ul>';
-    }
+    // Group by dayIdx
+    const dayGroups = {};
+    allLive.forEach(n => {
+      const d = n.dayIdx !== undefined ? n.dayIdx : -1;
+      if (!dayGroups[d]) dayGroups[d] = { traffic: [], weather: [] };
+      if (n.type === 'traffic') dayGroups[d].traffic.push(n);
+      else dayGroups[d].weather.push(n);
+    });
 
-    // Weather section
-    if (weatherNotifs.length > 0) {
-      html += '<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:8px 0 4px;">🌤️ 途经地天气</div>';
-      html += '<ul class="notif-list">';
-      weatherNotifs.forEach(n => {
-        html += `
-        <li class="notif-item">
-          <div class="notif-icon ${n.type}">🌤️</div>
-          <div class="notif-body">
-            <div class="notif-item-title">${n.title} <span class="notif-source auto">自动检测</span></div>
-            <div class="notif-item-content">${n.content}</div>
-          </div>
-          <span class="notif-time">${n.time}</span>
-        </li>`;
-      });
-      html += '</ul>';
-    }
+    // Sort by dayIdx
+    const sortedDays = Object.keys(dayGroups).map(Number).sort((a, b) => a - b);
+
+    sortedDays.forEach(dayIdx => {
+      const g = dayGroups[dayIdx];
+      const day = tripData.days[dayIdx];
+      const groupTitle = day ? `${day.label} · ${day.date} · ${day.route}` : '其他';
+
+      html += `<div class="day-group-header">📌 ${groupTitle}</div>`;
+
+      // Traffic for this day
+      if (g.traffic.length > 0) {
+        html += '<div class="day-sub-label">🚗 交通路况</div><ul class="notif-list">';
+        g.traffic.forEach(n => {
+          html += `
+          <li class="notif-item">
+            <div class="notif-icon traffic">🚗</div>
+            <div class="notif-body">
+              <div class="notif-item-title">${n.title} <span class="notif-source auto">自动</span></div>
+              <div class="notif-item-content">${n.content}</div>
+            </div>
+            <span class="notif-time">${n.time}</span>
+          </li>`;
+        });
+        html += '</ul>';
+      }
+
+      // Weather for this day
+      if (g.weather.length > 0) {
+        html += '<div class="day-sub-label">🌤️ 天气</div><ul class="notif-list">';
+        g.weather.forEach(n => {
+          html += `
+          <li class="notif-item">
+            <div class="notif-icon weather">🌤️</div>
+            <div class="notif-body">
+              <div class="notif-item-title">${n.title} <span class="notif-source auto">自动</span></div>
+              <div class="notif-item-content">${n.content}</div>
+            </div>
+            <span class="notif-time">${n.time}</span>
+          </li>`;
+        });
+        html += '</ul>';
+      }
+
+      // No data for this day
+      if (g.traffic.length === 0 && g.weather.length === 0) {
+        html += '<div class="empty-notif">暂无实时数据</div>';
+      }
+    });
   }
   html += '</div>';
 
@@ -1155,7 +1319,7 @@ function deleteManualNotification(id) {
 // ==================== RENDER: OVERVIEW ====================
 function renderOverview() {
   const container = document.getElementById('view-overview');
-  const meta = TRIP_DATA.meta;
+  const meta = tripData.meta;
 
   let html = renderNotificationPanel();
 
@@ -1189,7 +1353,7 @@ function renderOverview() {
       <div><div class="overview-card-title">行程总览</div><div class="overview-card-subtitle">点击日期节点查看详情</div></div>
     </div>
     <div class="timeline-horizontal">`;
-  TRIP_DATA.days.forEach((day, idx) => {
+  tripData.days.forEach((day, idx) => {
     html += `<div class="timeline-node" onclick="navigateToDay(${idx})" title="${day.label} ${day.date} ${day.route}"><div class="timeline-dot"></div><div class="timeline-label">${day.label}</div><div class="timeline-date">${day.date}</div></div>`;
   });
   html += '</div></div>';
@@ -1204,7 +1368,7 @@ function renderOverview() {
     <div style="overflow-x:auto;"><table class="booking-table">
       <thead><tr><th>预约项目</th><th>预约渠道</th><th>提前天数</th><th>紧急程度</th></tr></thead>
       <tbody>`;
-  TRIP_DATA.bookingTable.forEach(b => {
+  tripData.bookingTable.forEach(b => {
     const uText = b.daysAhead === 0 ? '当日' : b.daysAhead + '天';
     const uLabel = b.daysAhead >= 7 ? '紧急预约' : b.daysAhead >= 3 ? '尽快预约' : '常规预约';
     html += `<tr><td><strong>${b.item}</strong></td><td>${b.channel}</td><td>${uText}</td><td><span class="booking-urgency ${b.urgency}">${uLabel}</span></td></tr>`;
@@ -1219,7 +1383,7 @@ function renderOverview() {
       <div><div class="overview-card-title">自驾出行提示</div><div class="overview-card-subtitle">安全驾驶 · 愉快旅行</div></div>
     </div>
     <ul class="tip-list">`;
-  TRIP_DATA.travelTips.forEach((tip, idx) => {
+  tripData.travelTips.forEach((tip, idx) => {
     html += `<li class="tip-item"><span class="tip-num">${idx + 1}</span><span>${tip}</span></li>`;
   });
   html += '</ul></div>';
@@ -1230,32 +1394,36 @@ function renderOverview() {
 // ==================== RENDER: DAY DETAIL ====================
 function renderDayDetail() {
   const container = document.getElementById('view-detail');
-  const day = TRIP_DATA.days[currentDayIndex];
+  const day = tripData.days[currentDayIndex];
   const isFirst = currentDayIndex === 0;
-  const isLast = currentDayIndex === TRIP_DATA.days.length - 1;
+  const isLast = currentDayIndex === tripData.days.length - 1;
 
   let html = `
   <div class="day-nav">
     <button class="day-nav-btn" onclick="changeDay(-1)" ${isFirst ? 'disabled' : ''}>‹</button>
     <select class="day-select" onchange="jumpToDay(this.value)">
-      ${TRIP_DATA.days.map((d, i) => `<option value="${i}" ${i === currentDayIndex ? 'selected' : ''}>${d.label} · ${d.date} · ${d.route}</option>`).join('')}
+      ${tripData.days.map((d, i) => `<option value="${i}" ${i === currentDayIndex ? 'selected' : ''}>${d.label} · ${d.date} · ${d.route}</option>`).join('')}
     </select>
     <button class="day-nav-btn" onclick="changeDay(1)" ${isLast ? 'disabled' : ''}>›</button>
   </div>
 
   <div class="day-header-card">
-    <div class="day-header-top"><div class="day-label">${day.label} · ${day.date}</div><div class="day-drive">🚗 ${day.driveTime}</div></div>
+    <div class="day-header-top">
+      <div class="day-label">${day.label} · ${day.date} <button class="edit-btn" onclick="openEditModal('dayHeader')" title="编辑路线">✎</button></div>
+      <div class="day-drive">🚗 ${day.driveTime} <button class="edit-btn" onclick="openEditModal('dayHeader')" title="编辑驾驶时长">✎</button></div>
+    </div>
     <div class="day-title">${day.route}</div>
   </div>`;
 
   // Timeline
   html += '<div class="timeline-vertical">';
-  day.timeline.forEach(event => {
+  day.timeline.forEach((event, idx) => {
     const tc = event.type === 'mealtime' ? 'mealtime' : event.type === 'drive' ? 'drive' : event.type === 'hotel' ? 'hotel' : '';
     const tagMap = { mealtime: 'meal', drive: 'drive', hotel: 'hotel', activity: 'activity' };
     const tagLabelMap = { mealtime: '餐饮', drive: '驾驶', hotel: '住宿', activity: '活动' };
-    html += `<div class="timeline-event ${tc}"><div class="timeline-event-dot"></div><div class="event-card"><div class="event-time">${event.time}<span class="event-tag ${tagMap[event.type]}">${tagLabelMap[event.type]}</span></div><div class="event-activity">${event.activity}</div></div></div>`;
+    html += `<div class="timeline-event ${tc}"><div class="timeline-event-dot"></div><div class="event-card"><div class="event-time">${event.time}<span class="event-tag ${tagMap[event.type]}">${tagLabelMap[event.type]}</span><button class="edit-btn edit-btn-inline" onclick="openEditModal('timeline',${idx})" title="编辑">✎</button></div><div class="event-activity">${event.activity}</div></div></div>`;
   });
+  html += `<button class="add-event-btn" onclick="openEditModal('timeline',-1)">+ 添加时间节点</button>`;
   html += '</div>';
 
   // Weather for this day (from live data)
@@ -1271,12 +1439,12 @@ function renderDayDetail() {
   // Meals & Hotel
   if (day.meals.length > 0 || day.accommodation) {
     html += '<div class="info-grid">';
-    day.meals.forEach(meal => {
+    day.meals.forEach((meal, idx) => {
       const mc = meal.type.includes('午') || meal.type.includes('简') ? 'lunch' : 'dinner';
-      html += `<div class="info-card ${mc}"><div class="info-card-label">🍽️ ${meal.type}</div><div class="info-card-name">${meal.name}</div><div class="info-card-dishes">${meal.dishes}</div></div>`;
+      html += `<div class="info-card ${mc}"><div class="info-card-label">🍽️ ${meal.type} <button class="edit-btn" onclick="openEditModal('meal',${idx})" title="编辑">✎</button></div><div class="info-card-name">${meal.name}</div><div class="info-card-dishes">${meal.dishes}</div></div>`;
     });
     if (day.accommodation) {
-      html += `<div class="info-card hotel"><div class="info-card-label">🏨 住宿</div><div class="info-card-name">${day.accommodation.name}</div><div class="info-card-dishes">${day.accommodation.notes || ''}</div></div>`;
+      html += `<div class="info-card hotel"><div class="info-card-label">🏨 住宿 <button class="edit-btn" onclick="openEditModal('hotel')" title="编辑">✎</button></div><div class="info-card-name">${day.accommodation.name}</div><div class="info-card-dishes">${day.accommodation.notes || ''}</div></div>`;
     }
     html += '</div>';
   }
@@ -1327,7 +1495,7 @@ function switchView(view) {
 
 function changeDay(delta) {
   const ni = currentDayIndex + delta;
-  if (ni < 0 || ni >= TRIP_DATA.days.length) return;
+  if (ni < 0 || ni >= tripData.days.length) return;
   currentDayIndex = ni;
   renderDayDetail();
   document.getElementById('view-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1355,10 +1523,154 @@ document.addEventListener('keydown', (e) => {
   if (e.key === '1') switchView('overview');
   if (e.key === '2') switchView('detail');
   if (e.key === 'r' && e.ctrlKey) { e.preventDefault(); refreshLiveData(); }
+  if (e.key === 'Escape') closeEditModal();
 });
+
+// ==================== EDIT MODAL ====================
+function openEditModal(section, index) {
+  const day = tripData.days[currentDayIndex];
+  editTarget = { dayIdx: currentDayIndex, section, index };
+
+  const titleEl = document.getElementById('modal-title');
+  const bodyEl = document.getElementById('modal-body');
+  const footerEl = document.getElementById('modal-footer');
+  const modal = document.getElementById('edit-modal');
+
+  let title = '';
+  let body = '';
+  let footer = '';
+
+  if (section === 'dayHeader') {
+    title = `编辑 ${day.label} · ${day.date} 路线信息`;
+    body = `
+      <label class="modal-label">路线描述</label>
+      <input class="modal-input" id="edit-route" value="${escapeHtml(day.route)}">
+      <label class="modal-label">驾驶时长</label>
+      <input class="modal-input" id="edit-driveTime" value="${escapeHtml(day.driveTime)}">`;
+    footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('dayHeader')">保存</button>`;
+  } else if (section === 'timeline') {
+    if (index === -1) {
+      title = `添加时间节点 - ${day.label}`;
+      body = `
+        <label class="modal-label">时间</label>
+        <input class="modal-input" id="edit-time" placeholder="如 08:00 / 午间 / 傍晚" value="">
+        <label class="modal-label">活动内容</label>
+        <textarea class="modal-textarea" id="edit-activity" placeholder="描述活动内容"></textarea>
+        <label class="modal-label">类型</label>
+        <select class="modal-select" id="edit-type">
+          <option value="activity">活动</option>
+          <option value="drive">驾驶</option>
+          <option value="mealtime">餐饮</option>
+          <option value="hotel">住宿</option>
+        </select>`;
+      footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('timeline',-1)">添加</button>`;
+    } else {
+      const ev = day.timeline[index];
+      title = `编辑时间节点 - ${day.label}`;
+      body = `
+        <label class="modal-label">时间</label>
+        <input class="modal-input" id="edit-time" value="${escapeHtml(ev.time)}">
+        <label class="modal-label">活动内容</label>
+        <textarea class="modal-textarea" id="edit-activity">${escapeHtml(ev.activity)}</textarea>
+        <label class="modal-label">类型</label>
+        <select class="modal-select" id="edit-type">
+          <option value="activity" ${ev.type==='activity'?'selected':''}>活动</option>
+          <option value="drive" ${ev.type==='drive'?'selected':''}>驾驶</option>
+          <option value="mealtime" ${ev.type==='mealtime'?'selected':''}>餐饮</option>
+          <option value="hotel" ${ev.type==='hotel'?'selected':''}>住宿</option>
+        </select>`;
+      footer = `<button class="btn-delete" onclick="deleteTimelineEvent(${index})">删除</button><button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('timeline',${index})">保存</button>`;
+    }
+  } else if (section === 'meal') {
+    const meal = day.meals[index];
+    title = `编辑餐饮 - ${day.label}`;
+    body = `
+      <label class="modal-label">餐类</label>
+      <input class="modal-input" id="edit-meal-type" value="${escapeHtml(meal.type)}">
+      <label class="modal-label">餐厅名称</label>
+      <input class="modal-input" id="edit-meal-name" value="${escapeHtml(meal.name)}">
+      <label class="modal-label">菜品</label>
+      <textarea class="modal-textarea" id="edit-meal-dishes">${escapeHtml(meal.dishes)}</textarea>`;
+    footer = `<button class="btn-delete" onclick="deleteMeal(${index})">删除</button><button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('meal',${index})">保存</button>`;
+  } else if (section === 'hotel') {
+    const hotel = day.accommodation;
+    title = `编辑住宿 - ${day.label}`;
+    body = `
+      <label class="modal-label">酒店名称</label>
+      <input class="modal-input" id="edit-hotel-name" value="${escapeHtml(hotel.name)}">
+      <label class="modal-label">备注</label>
+      <textarea class="modal-textarea" id="edit-hotel-notes">${escapeHtml(hotel.notes || '')}</textarea>`;
+    footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('hotel')">保存</button>`;
+  }
+
+  titleEl.textContent = title;
+  bodyEl.innerHTML = body;
+  footerEl.innerHTML = footer;
+  modal.style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editTarget = null;
+}
+
+function saveEdit(section, index) {
+  const day = tripData.days[editTarget.dayIdx];
+
+  if (section === 'dayHeader') {
+    day.route = document.getElementById('edit-route').value.trim() || day.route;
+    day.driveTime = document.getElementById('edit-driveTime').value.trim() || day.driveTime;
+  } else if (section === 'timeline') {
+    const timeVal = document.getElementById('edit-time').value.trim();
+    const actVal = document.getElementById('edit-activity').value.trim();
+    const typeVal = document.getElementById('edit-type').value;
+    if (!timeVal || !actVal) { alert('请填写时间和活动内容'); return; }
+    if (index === -1) {
+      day.timeline.push({ time: timeVal, activity: actVal, type: typeVal });
+    } else {
+      day.timeline[index].time = timeVal;
+      day.timeline[index].activity = actVal;
+      day.timeline[index].type = typeVal;
+    }
+  } else if (section === 'meal') {
+    day.meals[index].type = document.getElementById('edit-meal-type').value.trim() || day.meals[index].type;
+    day.meals[index].name = document.getElementById('edit-meal-name').value.trim() || day.meals[index].name;
+    day.meals[index].dishes = document.getElementById('edit-meal-dishes').value.trim() || day.meals[index].dishes;
+  } else if (section === 'hotel') {
+    day.accommodation.name = document.getElementById('edit-hotel-name').value.trim() || day.accommodation.name;
+    day.accommodation.notes = document.getElementById('edit-hotel-notes').value.trim();
+  }
+
+  saveTripData();
+  closeEditModal();
+  renderDayDetail();
+}
+
+function deleteTimelineEvent(index) {
+  if (!confirm('确定删除这个时间节点吗？')) return;
+  tripData.days[editTarget.dayIdx].timeline.splice(index, 1);
+  saveTripData();
+  closeEditModal();
+  renderDayDetail();
+}
+
+function deleteMeal(index) {
+  if (!confirm('确定删除这条餐饮记录吗？')) return;
+  tripData.days[editTarget.dayIdx].meals.splice(index, 1);
+  saveTripData();
+  closeEditModal();
+  renderDayDetail();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 // ==================== INIT ====================
 async function init() {
+  tripData = loadTripData();
   renderOverview();
   await refreshLiveData();
 
