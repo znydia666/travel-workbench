@@ -599,6 +599,7 @@ body::before {
 
 <script>
 // ==================== CONFIG ====================
+const AMAP_KEY = '105fd952df7e80ed9eab6ef457a7d51d';
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 // ==================== TRIP DATA (editable + persisted) ====================
@@ -1512,33 +1513,37 @@ function openEditModal(section, index) {
     if (index === -1) {
       title = `添加导航点 - ${day.label}`;
       body = `
-        <label class="modal-label">📍 高德分享链接 <span style="font-weight:400;color:var(--text-muted);">（推荐）</span></label>
-        <input class="modal-input" id="edit-nav-link" placeholder="粘贴高德地图分享链接，自动解析">
-        <button type="button" class="btn-save" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick="parseNavLink()">🔍 解析链接</button>
-        <div id="parse-result" style="margin-top:6px;font-size:var(--font-xs);color:var(--text-secondary);"></div>
+        <label class="modal-label">🔍 搜索地点</label>
+        <div style="display:flex;gap:6px;">
+          <input class="modal-input" id="edit-nav-search" placeholder="输入地点名称，如：喀纳斯景区" style="flex:1;">
+          <button type="button" class="btn-save" style="font-size:12px;padding:6px 12px;white-space:nowrap;" onclick="searchAmapPOI()">搜索</button>
+        </div>
+        <div id="poi-results" style="margin-top:8px;max-height:180px;overflow-y:auto;"></div>
         <label class="modal-label">点位名称</label>
-        <input class="modal-input" id="edit-nav-name" placeholder="如：喀纳斯景区大门">
+        <input class="modal-input" id="edit-nav-name" placeholder="自动填入或手动输入">
         <label class="modal-label">经度 (lng)</label>
-        <input class="modal-input" id="edit-nav-lng" placeholder="如：87.1445">
+        <input class="modal-input" id="edit-nav-lng" placeholder="自动填入或手动输入">
         <label class="modal-label">纬度 (lat)</label>
-        <input class="modal-input" id="edit-nav-lat" placeholder="如：48.5056">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">💡 在高德地图App中搜索地点 → 分享 → 复制链接 → 粘贴到上方自动解析</div>`;
+        <input class="modal-input" id="edit-nav-lat" placeholder="自动填入或手动输入">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">💡 输入地点名称搜索，从结果中选择即可自动填入坐标</div>`;
       footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('navPoint',-1)">添加</button>`;
     } else {
       const pt = day.navPoints[index];
       title = `编辑导航点 - ${day.label}`;
       body = `
-        <label class="modal-label">📍 高德分享链接 <span style="font-weight:400;color:var(--text-muted);">（推荐）</span></label>
-        <input class="modal-input" id="edit-nav-link" placeholder="粘贴高德地图分享链接，自动解析">
-        <button type="button" class="btn-save" style="width:100%;margin-top:6px;font-size:12px;padding:6px;" onclick="parseNavLink()">🔍 解析链接</button>
-        <div id="parse-result" style="margin-top:6px;font-size:var(--font-xs);color:var(--text-secondary);"></div>
+        <label class="modal-label">🔍 重新搜索</label>
+        <div style="display:flex;gap:6px;">
+          <input class="modal-input" id="edit-nav-search" placeholder="输入新地点名称重新搜索" style="flex:1;">
+          <button type="button" class="btn-save" style="font-size:12px;padding:6px 12px;white-space:nowrap;" onclick="searchAmapPOI()">搜索</button>
+        </div>
+        <div id="poi-results" style="margin-top:8px;max-height:180px;overflow-y:auto;"></div>
         <label class="modal-label">点位名称</label>
         <input class="modal-input" id="edit-nav-name" value="${escapeHtml(pt.name)}">
         <label class="modal-label">经度 (lng)</label>
         <input class="modal-input" id="edit-nav-lng" value="${pt.lng}">
         <label class="modal-label">纬度 (lat)</label>
         <input class="modal-input" id="edit-nav-lat" value="${pt.lat}">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">💡 在高德地图App中搜索地点 → 分享 → 复制链接 → 粘贴到上方自动解析</div>`;
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">💡 输入地点名称搜索，从结果中选择即可更新坐标</div>`;
       footer = `<button class="btn-delete" onclick="deleteNavPoint(${index})">删除</button><button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('navPoint',${index})">保存</button>`;
     }
   }
@@ -1628,75 +1633,49 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Parse Amap share link to extract name and coordinates
-async function parseNavLink() {
-  const link = document.getElementById('edit-nav-link').value.trim();
-  const resultEl = document.getElementById('parse-result');
-  if (!link) { resultEl.textContent = '⚠️ 请先粘贴链接'; return; }
+// Search Amap POI by name and populate coordinates
+async function searchAmapPOI() {
+  const keyword = document.getElementById('edit-nav-search').value.trim();
+  const resultsEl = document.getElementById('poi-results');
+  if (!keyword) { resultsEl.innerHTML = '<div style="color:var(--desert-orange);font-size:12px;">请输入地点名称</div>'; return; }
 
-  resultEl.textContent = '🔍 正在解析...';
+  resultsEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">🔍 搜索中...</div>';
 
-  let lng = null, lat = null, name = '';
-  let urlsToTry = [link];
+  try {
+    const url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}&city=新疆&output=json&offset=5`;
+    const resp = await fetch(url);
+    const data = await resp.json();
 
-  // Try to follow surl.amap.com redirect
-  if (link.includes('surl.amap.com')) {
-    try {
-      const resp = await fetch(link, { method: 'HEAD', redirect: 'follow' });
-      if (resp.url && resp.url !== link) urlsToTry.unshift(resp.url);
-    } catch (e) {
-      // CORS blocked — use a CORS proxy or fallback
-      try {
-        const proxyResp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(link), { method: 'GET', redirect: 'follow' });
-        // This won't give us the redirect URL, but let's try anyway
-      } catch (e2) { /* both failed */ }
+    if (data.status === '1' && data.pois && data.pois.length > 0) {
+      let html = '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">找到 ' + data.pois.length + ' 个结果，点击选择：</div>';
+      data.pois.forEach((poi, i) => {
+        const loc = poi.location.split(',');
+        const lng = loc[0], lat = loc[1];
+        html += `
+          <div onclick="selectPOI('${poi.name.replace(/'/g, "\\'")}', '${lng}', '${lat}')"
+               style="padding:8px 10px;margin:4px 0;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;transition:0.15s;"
+               onmouseover="this.style.borderColor='var(--primary-green)';this.style.background='var(--primary-green-light)'"
+               onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
+            <strong>${poi.name}</strong>
+            <span style="color:var(--text-muted);margin-left:6px;">${poi.address || ''}</span>
+            <span style="float:right;color:var(--text-muted);font-size:10px;">${lng},${lat}</span>
+          </div>`;
+      });
+      resultsEl.innerHTML = html;
+    } else {
+      resultsEl.innerHTML = '<div style="color:var(--desert-orange);font-size:12px;">未找到匹配地点，请尝试更具体的关键词</div>';
     }
+  } catch (e) {
+    resultsEl.innerHTML = '<div style="color:var(--sunset-red);font-size:12px;">搜索失败，请检查网络后重试</div>';
   }
+}
 
-  for (const url of urlsToTry) {
-    // Pattern 1: ?p=POIID,lat,lng,name,
-    const pMatch = url.match(/[?&]p=([^,]*),([\d.]+),([\d.]+),([^,&]*)/);
-    if (pMatch) { lat = parseFloat(pMatch[2]); lng = parseFloat(pMatch[3]); name = decodeURIComponent(pMatch[4]) || ''; break; }
-
-    // Pattern 2: @lng,lat,
-    const atMatch = url.match(/@([\d.]+),([\d.]+),/);
-    if (atMatch) { lng = parseFloat(atMatch[1]); lat = parseFloat(atMatch[2]); break; }
-
-    // Pattern 3: lng=xxx&lat=xxx
-    const paramMatch = url.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
-    if (paramMatch) { lng = parseFloat(paramMatch[1]); lat = parseFloat(paramMatch[2]); break; }
-
-    // Pattern 4: /lng,lat/
-    const pathMatch = url.match(/\/([\d.]+),([\d.]+)\//);
-    if (pathMatch) { lng = parseFloat(pathMatch[1]); lat = parseFloat(pathMatch[2]); break; }
-
-    // Pattern 5: poiname param
-    const nameMatch = url.match(/[?&](?:poiname|name|title)=([^&]+)/i);
-    if (nameMatch && !name) { name = decodeURIComponent(nameMatch[1]); }
-  }
-
-  if (lng && lat) {
-    if (!name) name = '导航点';
-    document.getElementById('edit-nav-lng').value = lng;
-    document.getElementById('edit-nav-lat').value = lat;
-    document.getElementById('edit-nav-name').value = name;
-    resultEl.innerHTML = `✅ 解析成功！<br>名称: ${name}<br>坐标: ${lng}, ${lat}`;
-    resultEl.style.color = 'var(--primary-green)';
-  } else {
-    // Show helpful guidance
-    resultEl.innerHTML = `
-      <div style="color:var(--desert-orange);line-height:1.8;">
-        ⚠️ 短链接被浏览器安全策略拦截，无法自动解析。<br><br>
-        <strong>请按以下步骤获取完整链接：</strong><br>
-        1. 点击下方的「打开短链接」按钮<br>
-        2. 在打开的页面中，复制地址栏的完整URL<br>
-        3. 粘贴回此处，再次点击解析<br><br>
-        <button class="btn-save" style="font-size:12px;padding:6px 14px;" onclick="window.open('${link.replace(/'/g, "\\'")}', '_blank')">🔗 打开短链接</button>
-        <br><br>
-        或者直接手动填写名称和坐标👇
-      </div>`;
-    resultEl.style.color = 'var(--desert-orange)';
-  }
+// Select a POI from search results
+function selectPOI(name, lng, lat) {
+  document.getElementById('edit-nav-name').value = name;
+  document.getElementById('edit-nav-lng').value = lng;
+  document.getElementById('edit-nav-lat').value = lat;
+  document.getElementById('poi-results').innerHTML = '<div style="color:var(--primary-green);font-size:12px;">✅ 已选择: ' + name + '</div>';
 }
 
 // ==================== INIT ====================
