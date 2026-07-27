@@ -1632,62 +1632,69 @@ function escapeHtml(str) {
 async function parseNavLink() {
   const link = document.getElementById('edit-nav-link').value.trim();
   const resultEl = document.getElementById('parse-result');
-  if (!link) { resultEl.textContent = '⚠️ 请先粘贴高德分享链接'; return; }
+  if (!link) { resultEl.textContent = '⚠️ 请先粘贴链接'; return; }
 
   resultEl.textContent = '🔍 正在解析...';
 
   let lng = null, lat = null, name = '';
-  let finalUrl = link;
+  let urlsToTry = [link];
 
-  try {
-    // Follow surl.amap.com short link redirect
-    if (link.includes('surl.amap.com')) {
+  // Try to follow surl.amap.com redirect
+  if (link.includes('surl.amap.com')) {
+    try {
       const resp = await fetch(link, { method: 'HEAD', redirect: 'follow' });
-      finalUrl = resp.url;
+      if (resp.url && resp.url !== link) urlsToTry.unshift(resp.url);
+    } catch (e) {
+      // CORS blocked — use a CORS proxy or fallback
+      try {
+        const proxyResp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(link), { method: 'GET', redirect: 'follow' });
+        // This won't give us the redirect URL, but let's try anyway
+      } catch (e2) { /* both failed */ }
     }
-  } catch (e) { /* fall through to regex parsing */ }
-
-  // Pattern 1: ?p=POIID,lat,lng,name, (surl.amap.com redirect target)
-  const pMatch = finalUrl.match(/[?&]p=([^,]*),([\d.]+),([\d.]+),([^,&]*)/);
-  if (pMatch) {
-    lat = parseFloat(pMatch[2]);
-    lng = parseFloat(pMatch[3]);
-    name = decodeURIComponent(pMatch[4]) || '';
-    if (!name) name = '导航点';
   }
 
-  // Pattern 2: @lng,lat,zoom
-  if (!lng) {
-    const atMatch = finalUrl.match(/@([\d.]+),([\d.]+),/);
-    if (atMatch) { lng = parseFloat(atMatch[1]); lat = parseFloat(atMatch[2]); }
-  }
+  for (const url of urlsToTry) {
+    // Pattern 1: ?p=POIID,lat,lng,name,
+    const pMatch = url.match(/[?&]p=([^,]*),([\d.]+),([\d.]+),([^,&]*)/);
+    if (pMatch) { lat = parseFloat(pMatch[2]); lng = parseFloat(pMatch[3]); name = decodeURIComponent(pMatch[4]) || ''; break; }
 
-  // Pattern 3: lng=xxx&lat=xxx
-  if (!lng) {
-    const paramMatch = finalUrl.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
-    if (paramMatch) { lng = parseFloat(paramMatch[1]); lat = parseFloat(paramMatch[2]); }
-  }
+    // Pattern 2: @lng,lat,
+    const atMatch = url.match(/@([\d.]+),([\d.]+),/);
+    if (atMatch) { lng = parseFloat(atMatch[1]); lat = parseFloat(atMatch[2]); break; }
 
-  // Pattern 4: /lng,lat/ in path
-  if (!lng) {
-    const pathMatch = finalUrl.match(/\/([\d.]+),([\d.]+)\//);
-    if (pathMatch) { lng = parseFloat(pathMatch[1]); lat = parseFloat(pathMatch[2]); }
-  }
+    // Pattern 3: lng=xxx&lat=xxx
+    const paramMatch = url.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
+    if (paramMatch) { lng = parseFloat(paramMatch[1]); lat = parseFloat(paramMatch[2]); break; }
 
-  // Try to get name from poiname/title/name params
-  if (!name) {
-    const nameMatch = finalUrl.match(/[?&](?:poiname|name|title)=([^&]+)/i);
-    if (nameMatch) { name = decodeURIComponent(nameMatch[1]); }
+    // Pattern 4: /lng,lat/
+    const pathMatch = url.match(/\/([\d.]+),([\d.]+)\//);
+    if (pathMatch) { lng = parseFloat(pathMatch[1]); lat = parseFloat(pathMatch[2]); break; }
+
+    // Pattern 5: poiname param
+    const nameMatch = url.match(/[?&](?:poiname|name|title)=([^&]+)/i);
+    if (nameMatch && !name) { name = decodeURIComponent(nameMatch[1]); }
   }
 
   if (lng && lat) {
+    if (!name) name = '导航点';
     document.getElementById('edit-nav-lng').value = lng;
     document.getElementById('edit-nav-lat').value = lat;
-    if (name) document.getElementById('edit-nav-name').value = name;
-    resultEl.innerHTML = `✅ 解析成功！<br>名称: ${name || '未识别'}<br>坐标: ${lng}, ${lat}`;
+    document.getElementById('edit-nav-name').value = name;
+    resultEl.innerHTML = `✅ 解析成功！<br>名称: ${name}<br>坐标: ${lng}, ${lat}`;
     resultEl.style.color = 'var(--primary-green)';
   } else {
-    resultEl.innerHTML = '⚠️ 无法解析，请确认是高德分享链接。提示：高德App中搜索地点 → 分享 → 复制链接 → 粘贴重试';
+    // Show helpful guidance
+    resultEl.innerHTML = `
+      <div style="color:var(--desert-orange);line-height:1.8;">
+        ⚠️ 短链接被浏览器安全策略拦截，无法自动解析。<br><br>
+        <strong>请按以下步骤获取完整链接：</strong><br>
+        1. 点击下方的「打开短链接」按钮<br>
+        2. 在打开的页面中，复制地址栏的完整URL<br>
+        3. 粘贴回此处，再次点击解析<br><br>
+        <button class="btn-save" style="font-size:12px;padding:6px 14px;" onclick="window.open('${link.replace(/'/g, "\\'")}', '_blank')">🔗 打开短链接</button>
+        <br><br>
+        或者直接手动填写名称和坐标👇
+      </div>`;
     resultEl.style.color = 'var(--desert-orange)';
   }
 }
