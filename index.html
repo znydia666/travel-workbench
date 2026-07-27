@@ -1636,67 +1636,59 @@ async function parseNavLink() {
 
   resultEl.textContent = '🔍 正在解析...';
 
+  let lng = null, lat = null, name = '';
+  let finalUrl = link;
+
   try {
-    // Pattern 1: surl.amap.com short link
-    let url = link;
-    if (url.includes('surl.amap.com') || url.includes('amap.com/') && !url.includes('restapi')) {
-      // Try to fetch and follow redirect to get final URL
-      const resp = await fetch(url, { method: 'HEAD', redirect: 'follow' });
-      url = resp.url;
+    // Follow surl.amap.com short link redirect
+    if (link.includes('surl.amap.com')) {
+      const resp = await fetch(link, { method: 'HEAD', redirect: 'follow' });
+      finalUrl = resp.url;
     }
+  } catch (e) { /* fall through to regex parsing */ }
 
-    // Pattern 2: Extract lng, lat from URL
-    // Formats: ...?lng=xxx&lat=xxx or .../lng,lat/... or ...@lng,lat,...
-    let lng = null, lat = null, name = '';
+  // Pattern 1: ?p=POIID,lat,lng,name, (surl.amap.com redirect target)
+  const pMatch = finalUrl.match(/[?&]p=([^,]*),([\d.]+),([\d.]+),([^,&]*)/);
+  if (pMatch) {
+    lat = parseFloat(pMatch[2]);
+    lng = parseFloat(pMatch[3]);
+    name = decodeURIComponent(pMatch[4]) || '';
+    if (!name) name = '导航点';
+  }
 
-    // Try @lng,lat,zoom format (高德短链接重定向后常见)
-    const atMatch = url.match(/@([\d.]+),([\d.]+),/);
-    if (atMatch) {
-      lng = parseFloat(atMatch[1]);
-      lat = parseFloat(atMatch[2]);
-    }
+  // Pattern 2: @lng,lat,zoom
+  if (!lng) {
+    const atMatch = finalUrl.match(/@([\d.]+),([\d.]+),/);
+    if (atMatch) { lng = parseFloat(atMatch[1]); lat = parseFloat(atMatch[2]); }
+  }
 
-    // Try lng=xxx&lat=xxx
-    if (!lng) {
-      const paramMatch = url.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
-      if (paramMatch) { lng = parseFloat(paramMatch[1]); lat = parseFloat(paramMatch[2]); }
-    }
+  // Pattern 3: lng=xxx&lat=xxx
+  if (!lng) {
+    const paramMatch = finalUrl.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
+    if (paramMatch) { lng = parseFloat(paramMatch[1]); lat = parseFloat(paramMatch[2]); }
+  }
 
-    // Try /lng,lat/ in path
-    if (!lng) {
-      const pathMatch = url.match(/\/([\d.]+),([\d.]+)\//);
-      if (pathMatch) { lng = parseFloat(pathMatch[1]); lat = parseFloat(pathMatch[2]); }
-    }
+  // Pattern 4: /lng,lat/ in path
+  if (!lng) {
+    const pathMatch = finalUrl.match(/\/([\d.]+),([\d.]+)\//);
+    if (pathMatch) { lng = parseFloat(pathMatch[1]); lat = parseFloat(pathMatch[2]); }
+  }
 
-    // Try to get name from poiname or title params
-    const nameMatch = url.match(/[?&](?:poiname|name|title)=([^&]+)/i);
+  // Try to get name from poiname/title/name params
+  if (!name) {
+    const nameMatch = finalUrl.match(/[?&](?:poiname|name|title)=([^&]+)/i);
     if (nameMatch) { name = decodeURIComponent(nameMatch[1]); }
+  }
 
-    if (lng && lat) {
-      document.getElementById('edit-nav-lng').value = lng;
-      document.getElementById('edit-nav-lat').value = lat;
-      if (name && !document.getElementById('edit-nav-name').value) {
-        document.getElementById('edit-nav-name').value = name;
-      }
-      resultEl.innerHTML = `✅ 解析成功！坐标: ${lng}, ${lat} ${name ? '· ' + name : ''}`;
-      resultEl.style.color = 'var(--primary-green)';
-    } else {
-      // Try Amap POI search API to resolve the link
-      resultEl.innerHTML = '⚠️ 无法从链接中解析坐标，请手动输入。提示：在高德App中长按地点 → 分享 → 复制链接，粘贴后重试。';
-      resultEl.style.color = 'var(--desert-orange)';
-    }
-  } catch (e) {
-    // Fallback: try regex on original link
-    const atMatch = link.match(/@([\d.]+),([\d.]+),/);
-    if (atMatch) {
-      document.getElementById('edit-nav-lng').value = atMatch[1];
-      document.getElementById('edit-nav-lat').value = atMatch[2];
-      resultEl.innerHTML = `✅ 解析成功！坐标: ${atMatch[1]}, ${atMatch[2]}`;
-      resultEl.style.color = 'var(--primary-green)';
-    } else {
-      resultEl.innerHTML = '⚠️ 解析失败，请确认是高德地图分享链接，或手动输入坐标。';
-      resultEl.style.color = 'var(--sunset-red)';
-    }
+  if (lng && lat) {
+    document.getElementById('edit-nav-lng').value = lng;
+    document.getElementById('edit-nav-lat').value = lat;
+    if (name) document.getElementById('edit-nav-name').value = name;
+    resultEl.innerHTML = `✅ 解析成功！<br>名称: ${name || '未识别'}<br>坐标: ${lng}, ${lat}`;
+    resultEl.style.color = 'var(--primary-green)';
+  } else {
+    resultEl.innerHTML = '⚠️ 无法解析，请确认是高德分享链接。提示：高德App中搜索地点 → 分享 → 复制链接 → 粘贴重试';
+    resultEl.style.color = 'var(--desert-orange)';
   }
 }
 
