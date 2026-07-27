@@ -599,7 +599,6 @@ body::before {
 
 <script>
 // ==================== CONFIG ====================
-const AMAP_KEY = '105fd952df7e80ed9eab6ef457a7d51d';
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 // ==================== TRIP DATA (editable + persisted) ====================
@@ -611,16 +610,6 @@ const DEFAULT_TRIP_DATA = {
     flightBack: { code: 'HU6204', route: '乌鲁木齐 → 长沙', note: '晚间20点后起飞' },
     stats: { totalDriveHours: '约43h', totalDistance: '约2500km', avgDrivePerDay: '约4.8h', attractions: '15+' }
   },
-
-  // Key road segments to monitor (coordinates adjusted for Amap coverage)
-  monitoredRoads: [
-    { name: '独库公路南段(那拉提-巴音布鲁克)', city: '那拉提', lng: 84.20, lat: 43.30, dayIdx: 7 },
-    { name: '独库公路返程段(巴音布鲁克-天山)', city: '巴音布鲁克', lng: 84.80, lat: 43.00, dayIdx: 8 },
-    { name: 'S21阿乌高速(乌鲁木齐-阿勒泰)', city: '福海', lng: 87.50, lat: 47.10, dayIdx: 1 },
-    { name: '连霍高速(赛里木湖段)', city: '赛里木湖', lng: 81.30, lat: 44.60, dayIdx: 5 },
-    { name: 'G218国道(那拉提段)', city: '新源', lng: 83.30, lat: 43.40, dayIdx: 6 },
-    { name: '乌鲁木齐市区道路', city: '乌鲁木齐', lng: 87.58, lat: 43.82, dayIdx: 8 }
-  ],
 
   // Cities to monitor weather (QWeather location IDs)
   monitoredCities: [
@@ -899,7 +888,6 @@ function loadTripData() {
       // Deep merge: use saved days, but keep default meta/monitoredRoads/monitoredCities/bookingTable/travelTips
       return {
         meta: DEFAULT_TRIP_DATA.meta,
-        monitoredRoads: DEFAULT_TRIP_DATA.monitoredRoads,
         monitoredCities: DEFAULT_TRIP_DATA.monitoredCities,
         days: saved.days || DEFAULT_TRIP_DATA.days,
         bookingTable: DEFAULT_TRIP_DATA.bookingTable,
@@ -926,63 +914,6 @@ function saveManualNotifications() {
 }
 
 // ==================== LIVE DATA FETCHING ====================
-
-// Fetch traffic conditions from Amap Traffic API (with day info)
-async function fetchTrafficStatus() {
-  const results = [];
-  for (const road of tripData.monitoredRoads) {
-    const day = tripData.days[road.dayIdx];
-    const dayLabel = day ? `${day.label} · ${day.date} · ${day.route}` : '';
-    try {
-      const url = `https://restapi.amap.com/v3/traffic/status/circle?key=${AMAP_KEY}&location=${road.lng},${road.lat}&radius=10000&extensions=all`;
-      const resp = await fetch(url);
-      const data = await resp.json();
-
-      if (data.status === '1' && data.trafficinfo) {
-        const desc = data.trafficinfo.description || '';
-        const evalInfo = data.trafficinfo.evaluation;
-        const expedite = evalInfo?.expedite || '';
-
-        let status = 'normal';
-        let icon = '🟢';
-
-        if (desc.includes('拥堵') || desc.includes('缓行')) { status = 'warning'; icon = '🟡'; }
-        if (desc.includes('严重拥堵') || desc.includes('封闭') || desc.includes('管制')) { status = 'danger'; icon = '🔴'; }
-
-        let content = desc ? `${icon} ${desc}` : `${icon} 路况畅通`;
-        if (expedite) content += ` · 畅通${expedite}`;
-
-        results.push({
-          id: `traffic-${road.name}`, type: 'traffic',
-          title: `${road.name}`,
-          content,
-          time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto', status,
-          dayIdx: road.dayIdx, dayLabel
-        });
-      } else {
-        results.push({
-          id: `traffic-${road.name}`, type: 'traffic',
-          title: road.name,
-          content: '🔵 该区域暂无实时路况覆盖',
-          time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto', status: 'normal',
-          dayIdx: road.dayIdx, dayLabel
-        });
-      }
-    } catch (e) {
-      results.push({
-        id: `traffic-${road.name}`, type: 'traffic',
-        title: road.name,
-        content: '⚠️ 路况数据获取失败',
-        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-        source: 'auto', status: 'unknown',
-        dayIdx: road.dayIdx, dayLabel
-      });
-    }
-  }
-  return results;
-}
 
 // ==================== QWEATHER CONFIG ====================
 const QWEATHER_KEY = 'cf81dc02930347d28bc0872a691a79dd';
@@ -1123,30 +1054,8 @@ async function refreshLiveData() {
   if (dot) dot.classList.add('checking');
 
   try {
-    const [traffic, weather] = await Promise.all([
-      fetchTrafficStatus(),
-      fetchWeatherData()
-    ]);
-
-    liveNotifications = [...traffic, ...weather];
+    liveNotifications = await fetchWeatherData();
     lastRefreshTime = new Date();
-
-    // Auto-add urgent items as manual notifications if road closed
-    const urgentTraffic = traffic.filter(t => t.status === 'danger');
-    for (const t of urgentTraffic) {
-      const exists = manualNotifications.some(m => m.title === t.title && m.type === 'traffic');
-      if (!exists) {
-        manualNotifications.unshift({
-          id: `manual-${nextManualId++}`,
-          type: 'traffic',
-          title: '⚠️ ' + t.title + ' 交通异常',
-          content: t.content.replace(/[🟢🟡🔴]/g, ''),
-          time: new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          source: 'manual'
-        });
-      }
-    }
-    saveManualNotifications();
   } catch (e) {
     refreshError = '数据刷新失败: ' + e.message;
   }
@@ -1160,8 +1069,6 @@ async function refreshLiveData() {
 // ==================== RENDER: NOTIFICATION PANEL ====================
 function renderNotificationPanel() {
   const allLive = liveNotifications;
-  const trafficNotifs = allLive.filter(n => n.type === 'traffic');
-  const weatherNotifs = allLive.filter(n => n.type === 'weather');
   const dangerCount = allLive.filter(n => n.status === 'danger').length;
   const warningCount = allLive.filter(n => n.status === 'warning').length;
 
@@ -1171,11 +1078,11 @@ function renderNotificationPanel() {
   html += '<div class="live-status-bar">';
   html += '<div class="live-indicator">';
   if (isRefreshing) {
-    html += '<span class="live-dot checking"></span> 正在刷新实时数据...';
+    html += '<span class="live-dot checking"></span> 正在刷新天气数据...';
   } else if (refreshError) {
     html += '<span class="live-dot error"></span> 数据异常';
   } else if (lastRefreshTime) {
-    html += '<span class="live-dot"></span> 实时监控中';
+    html += '<span class="live-dot"></span> 实时天气监控中';
   } else {
     html += '<span class="live-dot checking"></span> 等待首次刷新...';
   }
@@ -1188,80 +1095,50 @@ function renderNotificationPanel() {
   html += '</div>';
   html += '</div>';
 
-  // Error banner
   if (refreshError) {
     html += `<div class="error-banner">⚠️ ${refreshError} <button class="btn-refresh" onclick="refreshLiveData()" style="margin-left:auto;">重试</button></div>`;
   }
 
-  // === AUTO-DETECTED (LIVE) — Grouped by Day ===
+  // === WEATHER (by Day) ===
   html += '<div class="notif-section">';
-  html += '<div class="notif-section-header">🤖 实时自动检测（按天排列）<span class="notif-section-badge live">自动</span>';
-  if (dangerCount > 0) html += `<span style="color:var(--sunset-red);font-size:11px;margin-left:4px;">${dangerCount}项异常</span>`;
+  html += '<div class="notif-section-header">🌤️ 途经地实时天气 <span class="notif-section-badge live">自动</span>';
+  if (dangerCount > 0) html += `<span style="color:var(--sunset-red);font-size:11px;margin-left:4px;">${dangerCount}项预警</span>`;
   if (warningCount > 0) html += `<span style="color:var(--desert-orange);font-size:11px;margin-left:4px;">${warningCount}项需关注</span>`;
   html += '</div>';
 
   if (allLive.length === 0 && !isRefreshing) {
     html += '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton" style="width:70%"></div>';
   } else if (allLive.length === 0) {
-    html += '<div class="empty-notif">正在加载实时数据...</div>';
+    html += '<div class="empty-notif">正在加载天气数据...</div>';
   } else {
-    // Group by dayIdx
     const dayGroups = {};
     allLive.forEach(n => {
       const d = n.dayIdx !== undefined ? n.dayIdx : -1;
-      if (!dayGroups[d]) dayGroups[d] = { traffic: [], weather: [] };
-      if (n.type === 'traffic') dayGroups[d].traffic.push(n);
-      else dayGroups[d].weather.push(n);
+      if (!dayGroups[d]) dayGroups[d] = [];
+      dayGroups[d].push(n);
     });
 
-    // Sort by dayIdx
     const sortedDays = Object.keys(dayGroups).map(Number).sort((a, b) => a - b);
 
     sortedDays.forEach(dayIdx => {
-      const g = dayGroups[dayIdx];
+      const items = dayGroups[dayIdx];
       const day = tripData.days[dayIdx];
       const groupTitle = day ? `${day.label} · ${day.date} · ${day.route}` : '其他';
 
-      html += `<div class="day-group-header">📌 ${groupTitle}</div>`;
-
-      // Traffic for this day
-      if (g.traffic.length > 0) {
-        html += '<div class="day-sub-label">🚗 交通路况</div><ul class="notif-list">';
-        g.traffic.forEach(n => {
-          html += `
-          <li class="notif-item">
-            <div class="notif-icon traffic">🚗</div>
-            <div class="notif-body">
-              <div class="notif-item-title">${n.title} <span class="notif-source auto">自动</span></div>
-              <div class="notif-item-content">${n.content}</div>
-            </div>
-            <span class="notif-time">${n.time}</span>
-          </li>`;
-        });
-        html += '</ul>';
-      }
-
-      // Weather for this day
-      if (g.weather.length > 0) {
-        html += '<div class="day-sub-label">🌤️ 天气</div><ul class="notif-list">';
-        g.weather.forEach(n => {
-          html += `
-          <li class="notif-item">
-            <div class="notif-icon weather">🌤️</div>
-            <div class="notif-body">
-              <div class="notif-item-title">${n.title} <span class="notif-source auto">自动</span></div>
-              <div class="notif-item-content">${n.content}</div>
-            </div>
-            <span class="notif-time">${n.time}</span>
-          </li>`;
-        });
-        html += '</ul>';
-      }
-
-      // No data for this day
-      if (g.traffic.length === 0 && g.weather.length === 0) {
-        html += '<div class="empty-notif">暂无实时数据</div>';
-      }
+      html += `<div class="day-group-header">📌 ${groupTitle}</div><ul class="notif-list">`;
+      items.forEach(n => {
+        const iconMap = { weather: '🌤️' };
+        html += `
+        <li class="notif-item">
+          <div class="notif-icon ${n.type}">${iconMap[n.type] || '📌'}</div>
+          <div class="notif-body">
+            <div class="notif-item-title">${n.title} <span class="notif-source auto">自动</span></div>
+            <div class="notif-item-content">${n.content}</div>
+          </div>
+          <span class="notif-time">${n.time}</span>
+        </li>`;
+      });
+      html += '</ul>';
     });
   }
   html += '</div>';
@@ -1466,15 +1343,13 @@ function renderDayDetail() {
     html += '</div>';
   }
 
-  // Nav buttons
-  if (day.navPoints.length > 0) {
-    html += '<div class="nav-section"><div class="nav-section-title">🧭 一键导航</div><div class="nav-buttons">';
-    day.navPoints.forEach((pt, idx) => {
-      const btnClass = idx === day.navPoints.length - 1 ? 'nav-btn-dest' : '';
-      html += `<button class="nav-btn ${btnClass}" onclick="openNav('${pt.name.replace(/'/g, "\\'")}', ${pt.lng}, ${pt.lat})"><span class="nav-btn-icon">📍</span>${pt.name}</button>`;
-    });
-    html += '</div></div>';
-  }
+  // Nav buttons (editable)
+  html += '<div class="nav-section"><div class="nav-section-title">🧭 一键导航 <button class="edit-btn" onclick="openEditModal(\'navPoint\',-1)" title="添加导航点">+</button></div><div class="nav-buttons">';
+  day.navPoints.forEach((pt, idx) => {
+    const btnClass = idx === day.navPoints.length - 1 ? 'nav-btn-dest' : '';
+    html += `<div style="position:relative;display:inline-flex;align-items:center;gap:2px;"><button class="nav-btn ${btnClass}" onclick="openNav('${pt.name.replace(/'/g, "\\'")}', ${pt.lng}, ${pt.lat})"><span class="nav-btn-icon">📍</span>${pt.name}</button><button class="edit-btn edit-btn-inline" onclick="openEditModal('navPoint',${idx})" title="编辑导航点">✎</button></div>`;
+  });
+  html += '</div></div>';
 
   // Reservations
   if (day.reservations.length > 0) {
@@ -1490,8 +1365,8 @@ function renderDayDetail() {
 
 // ==================== INTERACTIONS ====================
 function openNav(name, lng, lat) {
-  // 高德地图H5网页版 — 微信/小程序/浏览器均可打开，不依赖App
-  const uri = `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(name)}&callnative=0`;
+  // 高德地图URI Scheme — 直接唤起App导航
+  const uri = `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&callnative=1`;
   window.open(uri, '_blank');
 }
 
@@ -1618,6 +1493,29 @@ function openEditModal(section, index) {
       <label class="modal-label">备注</label>
       <textarea class="modal-textarea" id="edit-hotel-notes">${escapeHtml(hotel.notes || '')}</textarea>`;
     footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('hotel')">保存</button>`;
+  } else if (section === 'navPoint') {
+    if (index === -1) {
+      title = `添加导航点 - ${day.label}`;
+      body = `
+        <label class="modal-label">点位名称</label>
+        <input class="modal-input" id="edit-nav-name" placeholder="如：喀纳斯景区大门">
+        <label class="modal-label">经度 (lng)</label>
+        <input class="modal-input" id="edit-nav-lng" placeholder="如：87.1445">
+        <label class="modal-label">纬度 (lat)</label>
+        <input class="modal-input" id="edit-nav-lat" placeholder="如：48.5056">`;
+      footer = `<button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('navPoint',-1)">添加</button>`;
+    } else {
+      const pt = day.navPoints[index];
+      title = `编辑导航点 - ${day.label}`;
+      body = `
+        <label class="modal-label">点位名称</label>
+        <input class="modal-input" id="edit-nav-name" value="${escapeHtml(pt.name)}">
+        <label class="modal-label">经度 (lng)</label>
+        <input class="modal-input" id="edit-nav-lng" value="${pt.lng}">
+        <label class="modal-label">纬度 (lat)</label>
+        <input class="modal-input" id="edit-nav-lat" value="${pt.lat}">`;
+      footer = `<button class="btn-delete" onclick="deleteNavPoint(${index})">删除</button><button class="btn-cancel" onclick="closeEditModal()">取消</button><button class="btn-save" onclick="saveEdit('navPoint',${index})">保存</button>`;
+    }
   }
 
   titleEl.textContent = title;
@@ -1656,8 +1554,28 @@ function saveEdit(section, index) {
   } else if (section === 'hotel') {
     day.accommodation.name = document.getElementById('edit-hotel-name').value.trim() || day.accommodation.name;
     day.accommodation.notes = document.getElementById('edit-hotel-notes').value.trim();
+  } else if (section === 'navPoint') {
+    const nameVal = document.getElementById('edit-nav-name').value.trim();
+    const lngVal = parseFloat(document.getElementById('edit-nav-lng').value);
+    const latVal = parseFloat(document.getElementById('edit-nav-lat').value);
+    if (!nameVal || isNaN(lngVal) || isNaN(latVal)) { alert('请填写完整的名称和有效坐标'); return; }
+    if (index === -1) {
+      day.navPoints.push({ name: nameVal, lng: lngVal, lat: latVal });
+    } else {
+      day.navPoints[index].name = nameVal;
+      day.navPoints[index].lng = lngVal;
+      day.navPoints[index].lat = latVal;
+    }
   }
 
+  saveTripData();
+  closeEditModal();
+  renderDayDetail();
+}
+
+function deleteNavPoint(index) {
+  if (!confirm('确定删除这个导航点吗？')) return;
+  tripData.days[editTarget.dayIdx].navPoints.splice(index, 1);
   saveTripData();
   closeEditModal();
   renderDayDetail();
