@@ -1656,7 +1656,7 @@ async function searchAmapPOI() {
   resultsEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">🔍 搜索中...</div>';
 
   try {
-    const url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}&city=新疆&output=json&offset=10&page=1`;
+    const url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}&output=json&offset=20&page=1`;
     const resp = await fetch(url);
     const data = await resp.json();
 
