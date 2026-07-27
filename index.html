@@ -1692,28 +1692,45 @@ function selectPOI(name, lng, lat) {
   document.getElementById('poi-results').innerHTML = '<div style="color:var(--primary-green);font-size:12px;">✅ 已选择: ' + name + '</div>';
 }
 
-// Parse Amap share link — user opens link in browser first, pastes full URL
+// Parse Amap share link — resolves short links via CORS proxy
 async function parseAmapLink() {
   const link = document.getElementById('edit-nav-link').value.trim();
   const resultEl = document.getElementById('link-parse-result');
   if (!link) { resultEl.innerHTML = '<span style="color:var(--desert-orange);">请先粘贴链接</span>'; return; }
 
-  // Try direct regex first (works for full amap.com URLs)
+  resultEl.innerHTML = '<span style="color:var(--text-muted);">🔍 解析中...</span>';
+
+  let finalUrl = link;
+
+  // If it's a short link, resolve via CORS proxy
+  if (link.includes('surl.amap.com')) {
+    try {
+      const proxyUrl = 'https://proxy.cors.sh/' + link;
+      const resp = await fetch(proxyUrl, { headers: { 'x-cors-headers': 'location' } });
+      // cors.sh follows redirects, final URL is in response
+      finalUrl = resp.url;
+    } catch (e) {
+      resultEl.innerHTML = '<span style="color:var(--sunset-red);">网络错误，请重试</span>';
+      return;
+    }
+  }
+
+  // Parse coordinates from URL
   let lng = null, lat = null, name = '';
 
   // Pattern 1: ?p=POIID,lat,lng,name,
-  const pMatch = link.match(/[?&]p=([^,]*),([\d.]+),([\d.]+),([^,&]*)/);
+  const pMatch = finalUrl.match(/[?&]p=([^,]*),([\d.]+),([\d.]+),([^,&]*)/);
   if (pMatch) { lat = parseFloat(pMatch[2]); lng = parseFloat(pMatch[3]); name = decodeURIComponent(pMatch[4]) || ''; }
 
   // Pattern 2: @lng,lat,
   if (!lng) {
-    const atMatch = link.match(/@([\d.]+),([\d.]+),/);
+    const atMatch = finalUrl.match(/@([\d.]+),([\d.]+),/);
     if (atMatch) { lng = parseFloat(atMatch[1]); lat = parseFloat(atMatch[2]); }
   }
 
   // Pattern 3: lng/lon=xxx&lat=xxx
   if (!lng) {
-    const paramMatch = link.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
+    const paramMatch = finalUrl.match(/[?&]l(?:ng|on)=([\d.]+).*?[?&]lat=([\d.]+)/i);
     if (paramMatch) { lng = parseFloat(paramMatch[1]); lat = parseFloat(paramMatch[2]); }
   }
 
@@ -1722,20 +1739,9 @@ async function parseAmapLink() {
     document.getElementById('edit-nav-name').value = name;
     document.getElementById('edit-nav-lng').value = lng;
     document.getElementById('edit-nav-lat').value = lat;
-    resultEl.innerHTML = '<span style="color:var(--primary-green);">✅ 已导入: ' + name + ' (' + lng + ',' + lat + ')</span>';
-    return;
-  }
-
-  // It's a short link — guide user to open in browser
-  if (link.includes('surl.amap.com') || link.includes('amap.com')) {
-    resultEl.innerHTML = `
-      <div style="color:var(--desert-orange);line-height:1.8;font-size:11px;">
-        ⚠️ 这是高德短链接，需要先展开。<br>
-        <button class="btn-save" style="font-size:11px;padding:4px 10px;margin:4px 0;" onclick="window.open('${link.replace(/'/g, "\\'")}', '_blank')">🔗 在浏览器中打开</button><br>
-        打开后 → 复制地址栏完整URL → 粘贴回来 → 再次点「解析」
-      </div>`;
+    resultEl.innerHTML = '<span style="color:var(--primary-green);">✅ 已导入: ' + name + ' (' + lng.toFixed(6) + ',' + lat.toFixed(6) + ')</span>';
   } else {
-    resultEl.innerHTML = '<span style="color:var(--desert-orange);font-size:11px;">无法识别此链接格式，请用搜索功能或手动填写坐标</span>';
+    resultEl.innerHTML = '<span style="color:var(--desert-orange);">无法识别此链接格式，请用搜索功能</span>';
   }
 }
 
