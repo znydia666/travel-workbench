@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>旅行计划工作台 - 9天北疆自驾</title>
+<title>新疆gogogo - 9天北疆自驾</title>
 <style>
 /* ===== CSS Variables ===== */
 :root {
@@ -54,6 +54,9 @@
   --transition-normal: 0.25s ease;
 
   --max-width: 780px;
+
+  /* Background image */
+  --bg-image: url('https://images.unsplash.com/photo-1599589453773-67b976c8c00e?w=1920&q=80');
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -63,10 +66,24 @@ html { font-size: var(--font-base); -webkit-font-smoothing: antialiased; scroll-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   background: var(--bg);
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
   padding-bottom: 60px;
+  position: relative;
+}
+
+/* Background overlay for readability */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(245, 242, 237, 0.88);
+  z-index: -1;
 }
 
 /* Header */
@@ -552,7 +569,7 @@ body {
 <!-- ===== Header ===== -->
 <header class="app-header">
   <div class="app-header-inner">
-    <div class="app-title">🏔️ 旅行计划工作台</div>
+    <div class="app-title">🏔️ 新疆gogogo</div>
     <div class="app-subtitle">9天北疆自驾环线 · 7月31日 - 8月9日</div>
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchView('overview')">📋 总览</button>
@@ -578,7 +595,7 @@ body {
   </div>
 </div>
 
-<footer class="app-footer">北疆自驾旅行计划 · 实时交通+天气 · 高德地图导航</footer>
+<footer class="app-footer">新疆gogogo · 9天北疆自驾 · 实时交通+天气 · 高德地图导航</footer>
 
 <script>
 // ==================== CONFIG ====================
