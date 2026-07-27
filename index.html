@@ -114,9 +114,9 @@ body::before {
 
 /* Main Content */
 .main-content { max-width: var(--max-width); margin: 0 auto; padding: 16px; }
-.view { display: none; animation: fadeIn 0.3s ease; }
-.view.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.view { display: none; }
+.view.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* ============ NOTIFICATION PANEL (UPGRADED) ============ */
 .notification-panel {
@@ -1418,8 +1418,10 @@ function changeDay(delta) {
   if (ni < 0 || ni >= tripData.days.length) return;
   currentDayIndex = ni;
   renderDayDetail();
-  // 切换日期后滚动到页面最顶部，确保日期导航栏可见
-  window.scrollTo(0, 0);
+  // 等 DOM 渲染完成后再回到顶部，避免 iOS Safari 动画/滚动冲突导致元素闪烁消失
+  requestAnimationFrame(() => {
+    window.scrollTo(0, 0);
+  });
 }
 
 function jumpToDay(indexStr) {
