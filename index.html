@@ -401,28 +401,45 @@ body::before {
 .day-title { font-size: var(--font-xl); font-weight: 700; line-height: 1.3; }
 .day-drive { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: var(--radius-full); font-size: var(--font-xs); font-weight: 600; }
 
-/* Vertical Timeline */
-.timeline-vertical { position: relative; padding-left: 32px; }
-.timeline-vertical::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: var(--border); }
-.timeline-event { position: relative; margin-bottom: 16px; }
-.timeline-event:last-child { margin-bottom: 0; }
-.timeline-event-dot { position: absolute; left: -23px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary-green); border: 3px solid #fff; box-shadow: 0 0 0 2px var(--primary-green); z-index: 1; }
-.timeline-event.mealtime .timeline-event-dot { background: var(--desert-orange); box-shadow: 0 0 0 2px var(--desert-orange); }
-.timeline-event.drive .timeline-event-dot { background: var(--sky-blue); box-shadow: 0 0 0 2px var(--sky-blue); }
-.timeline-event.hotel .timeline-event-dot { background: var(--lake-cyan); box-shadow: 0 0 0 2px var(--lake-cyan); }
-.event-card { background: var(--card-bg); border-radius: var(--radius-sm); padding: 12px 16px; box-shadow: var(--shadow-sm); transition: var(--transition-fast); }
-.event-card:hover { box-shadow: var(--shadow-md); }
-.event-time { font-size: var(--font-xs); color: var(--primary-green); font-weight: 700; margin-bottom: 3px; }
-.mealtime .event-time { color: var(--desert-orange); }
-.drive .event-time { color: var(--sky-blue); }
-.hotel .event-time { color: var(--lake-cyan); }
-.event-activity { font-size: var(--font-sm); line-height: 1.5; }
-.event-activity strong { font-weight: 600; }
-.event-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
-.event-tag.meal { background: var(--desert-orange-light); color: var(--desert-orange); }
-.event-tag.drive { background: var(--sky-blue-light); color: var(--sky-blue); }
-.event-tag.hotel { background: var(--lake-cyan-light); color: var(--lake-cyan); }
-.event-tag.activity { background: var(--primary-green-light); color: var(--primary-green); }
+/* Day detail top: mini-map + info side by side */
+.day-top-row { display: flex; gap: 14px; margin-bottom: 16px; align-items: stretch; }
+.day-mini-map { flex: 0 0 130px; background: linear-gradient(135deg, #e8f5e9 0%, #e3f0fa 100%); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.day-mini-map svg { width: 100%; height: 100%; }
+.day-info-col { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+.day-info-route { font-size: var(--font-md); font-weight: 700; line-height: 1.3; margin-bottom: 2px; word-break: break-all; }
+.day-info-route .edit-btn { vertical-align: middle; }
+.day-info-drive { font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: 6px; }
+.day-info-weather { display: flex; gap: 8px; font-size: var(--font-xs); flex-wrap: wrap; }
+.day-info-weather-item { display: flex; align-items: center; gap: 4px; background: var(--card-bg); border-radius: var(--radius-sm); padding: 4px 10px; box-shadow: var(--shadow-sm); white-space: nowrap; }
+.day-info-weather-icon { font-size: 16px; }
+.day-info-weather-temp { font-weight: 700; color: var(--primary-green); }
+.day-info-weather-city { color: var(--text-secondary); }
+
+/* Compact timeline with inline nav buttons */
+.timeline-compact { position: relative; padding-left: 24px; }
+.timeline-compact::before { content: ''; position: absolute; left: 9px; top: 4px; bottom: 4px; width: 2px; background: var(--border); border-radius: 1px; }
+.tc-item { position: relative; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 6px; }
+.tc-item:last-child { margin-bottom: 0; }
+.tc-dot { position: absolute; left: -21px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary-green); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--primary-green); z-index: 1; flex-shrink: 0; }
+.tc-item.mealtime .tc-dot { background: var(--desert-orange); box-shadow: 0 0 0 2px var(--desert-orange); }
+.tc-item.drive .tc-dot { background: var(--sky-blue); box-shadow: 0 0 0 2px var(--sky-blue); }
+.tc-item.hotel .tc-dot { background: var(--lake-cyan); box-shadow: 0 0 0 2px var(--lake-cyan); }
+.tc-content { flex: 1; min-width: 0; background: var(--card-bg); border-radius: var(--radius-sm); padding: 6px 10px; box-shadow: var(--shadow-sm); }
+.tc-time { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-bottom: 1px; display: flex; align-items: center; gap: 4px; }
+.tc-tag { font-size: 9px; padding: 1px 5px; border-radius: var(--radius-full); font-weight: 600; display: inline-block; }
+.tc-tag.drive { background: var(--sky-blue-light); color: var(--sky-blue); }
+.tc-tag.meal { background: var(--desert-orange-light); color: var(--desert-orange); }
+.tc-tag.hotel { background: var(--lake-cyan-light); color: var(--lake-cyan); }
+.tc-tag.activity { background: var(--primary-green-light); color: var(--primary-green); }
+.tc-activity { font-size: var(--font-xs); line-height: 1.4; }
+.tc-activity strong { font-weight: 600; }
+.tc-nav-btn { display: inline-flex; align-items: center; gap: 2px; padding: 2px 7px; margin-top: 3px; background: var(--sky-blue); color: #fff; border: none; border-radius: var(--radius-full); font-size: 10px; font-weight: 600; cursor: pointer; transition: var(--transition-fast); }
+.tc-nav-btn:hover { background: #4a89c0; }
+.tc-edit-btn { display: inline-flex; align-items: center; padding: 1px 5px; margin-left: 4px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 10px; cursor: pointer; color: var(--text-muted); vertical-align: middle; }
+
+/* Day section divider */
+.day-section { margin-top: 16px; }
+.day-section-title { font-weight: 700; font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 
 /* Info Grid */
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
@@ -1429,6 +1446,21 @@ function renderDayDetail() {
   const day = tripData.days[currentDayIndex];
   const isFirst = currentDayIndex === 0;
   const isLast = currentDayIndex === tripData.days.length - 1;
+  // 下一天的目的地
+  const nextDay = currentDayIndex < tripData.days.length - 1 ? tripData.days[currentDayIndex + 1] : null;
+
+  // 天气数据
+  const weatherMap = {};
+  liveNotifications.forEach(n => {
+    if (n.type === 'weather' && n.temp) {
+      const city = n.title.split('·')[0].trim();
+      weatherMap[city] = { temp: n.temp, icon: parseFloat(n.temp) > 30 ? '☀️' : parseFloat(n.temp) > 20 ? '🌤️' : parseFloat(n.temp) > 10 ? '🌥️' : '❄️' };
+    }
+  });
+  // 从 route 中提取目的地城市名
+  const routeParts = day.route.split('→').map(s => s.trim());
+  const destCity = routeParts[routeParts.length - 1];
+  const nextDestCity = nextDay ? nextDay.route.split('→').map(s => s.trim()).pop() : null;
 
   let html = `
   <div class="day-nav">
@@ -1439,57 +1471,87 @@ function renderDayDetail() {
     <button class="day-nav-btn" onclick="changeDay(1)" ${isLast ? 'disabled' : ''}>›</button>
   </div>
 
-  <div class="day-header-card">
-    <div class="day-header-top">
-      <div class="day-label">${day.label} · ${day.date} <button class="edit-btn" onclick="openEditModal('dayHeader')" title="编辑路线">✎</button></div>
-      <div class="day-drive">🚗 ${day.driveTime} <button class="edit-btn" onclick="openEditModal('dayHeader')" title="编辑驾驶时长">✎</button></div>
+  <div class="day-top-row">
+    <div class="day-mini-map">${renderDayMiniMap(day)}</div>
+    <div class="day-info-col">
+      <div>
+        <div class="day-info-route">${day.label} · ${day.date} ${day.route} <button class="edit-btn" onclick="openEditModal('dayHeader')" title="编辑路线" style="vertical-align:middle;">✎</button></div>
+        <div class="day-info-drive">🚗 ${day.driveTime}</div>
+      </div>
+      <div class="day-info-weather">
+        ${weatherMap[destCity] ? `<div class="day-info-weather-item"><span class="day-info-weather-icon">${weatherMap[destCity].icon}</span><span class="day-info-weather-temp">${weatherMap[destCity].temp}°C</span><span class="day-info-weather-city">${destCity}</span></div>` : `<div class="day-info-weather-item"><span class="day-info-weather-icon">☁️</span><span class="day-info-weather-city">${destCity}</span></div>`}
+        ${nextDestCity ? (weatherMap[nextDestCity] ? `<div class="day-info-weather-item"><span class="day-info-weather-icon">${weatherMap[nextDestCity].icon}</span><span class="day-info-weather-temp">${weatherMap[nextDestCity].temp}°C</span><span class="day-info-weather-city">→ ${nextDestCity}</span></div>` : `<div class="day-info-weather-item"><span class="day-info-weather-icon">☁️</span><span class="day-info-weather-city">→ ${nextDestCity}</span></div>`) : ''}
+      </div>
     </div>
-    <div class="day-title">${day.route}</div>
   </div>`;
 
-  // Timeline
-  html += '<div class="timeline-vertical">';
+  // Timeline — 紧凑版，navPoints 匹配的直接出导航按钮
+  html += '<div class="timeline-compact">';
   day.timeline.forEach((event, idx) => {
     const tc = event.type === 'mealtime' ? 'mealtime' : event.type === 'drive' ? 'drive' : event.type === 'hotel' ? 'hotel' : '';
     const tagMap = { mealtime: 'meal', drive: 'drive', hotel: 'hotel', activity: 'activity' };
     const tagLabelMap = { mealtime: '餐饮', drive: '驾驶', hotel: '住宿', activity: '活动' };
-    html += `<div class="timeline-event ${tc}"><div class="timeline-event-dot"></div><div class="event-card"><div class="event-time">${event.time}<span class="event-tag ${tagMap[event.type]}">${tagLabelMap[event.type]}</span><button class="edit-btn edit-btn-inline" onclick="openEditModal('timeline',${idx})" title="编辑">✎</button></div><div class="event-activity">${event.activity}</div></div></div>`;
+    // 匹配 navPoint：在 activity 文字中查找是否包含 navPoints 中的地名
+    let matchedNav = null;
+    for (const pt of day.navPoints) {
+      if (event.activity.includes(pt.name) || pt.name.split(/[·(（]/)[0].trim().length > 1 && event.activity.includes(pt.name.split(/[·(（]/)[0].trim())) {
+        matchedNav = pt; break;
+      }
+    }
+    html += `<div class="tc-item ${tc}"><div class="tc-dot"></div><div class="tc-content"><div class="tc-time">${event.time}<span class="tc-tag ${tagMap[event.type]}">${tagLabelMap[event.type]}</span><button class="tc-edit-btn" onclick="openEditModal('timeline',${idx})" title="编辑">✎</button></div><div class="tc-activity">${event.activity}</div>${matchedNav ? `<button class="tc-nav-btn" onclick="openNav('${matchedNav.name.replace(/'/g, "\\'")}', ${matchedNav.lng}, ${matchedNav.lat})">🧭 导航</button>` : ''}</div></div>`;
   });
   html += `<button class="add-event-btn" onclick="openEditModal('timeline',-1)">+ 添加时间节点</button>`;
   html += '</div>';
 
-  // Weather for this day (from live data)
-  const dayWeather = liveNotifications.filter(n => n.type === 'weather' && n.temp);
-  if (dayWeather.length > 0) {
-    html += '<div class="weather-inline"><div class="nav-section-title">🌤️ 途经地实时天气</div><div class="weather-grid">';
-    dayWeather.forEach(w => {
-      html += `<div class="weather-card"><span class="weather-card-icon">${parseFloat(w.temp) > 30 ? '☀️' : parseFloat(w.temp) > 20 ? '🌤️' : parseFloat(w.temp) > 10 ? '🌥️' : '❄️'}</span><div><div class="weather-card-temp">${w.temp}°C</div><div class="weather-card-location">${w.title.split('·')[0].trim()}</div></div></div>`;
+  // Meals & Hotel — 保留，含导航按钮
+  if (day.meals.length > 0 || day.accommodation) {
+    html += '<div class="day-section"><div class="day-section-title">🍽️ 餐饮 & 住宿</div><div class="info-grid">';
+    day.meals.forEach((meal, idx) => {
+      const mc = meal.type.includes('午') || meal.type.includes('简') ? 'lunch' : 'dinner';
+      // 在 navPoints 中查找匹配的导航坐标
+      let mealNav = null;
+      for (const pt of day.navPoints) {
+        if (meal.name && pt.name && (pt.name.includes(meal.name.substring(0, 3)) || meal.name.includes(pt.name.substring(0, 3)))) {
+          mealNav = pt; break;
+        }
+      }
+      const hasNav = mealNav || meal.navLng;
+      html += `<div class="info-card ${mc}"><div class="info-card-label">🍽️ ${meal.type} <button class="edit-btn" onclick="openEditModal('meal',${idx})" title="编辑">✎</button></div><div class="info-card-name">${meal.name}</div><div class="info-card-dishes">${meal.dishes}</div>${hasNav ? `<button class="tc-nav-btn" style="margin-top:4px;" onclick="openNav('${(mealNav ? mealNav.name : meal.name).replace(/'/g, "\\'")}', ${mealNav ? mealNav.lng : meal.navLng}, ${mealNav ? mealNav.lat : meal.navLat})">🧭 导航</button>` : ''}</div>`;
+    });
+    if (day.accommodation) {
+      let hotelNav = null;
+      for (const pt of day.navPoints) {
+        const hotelName = day.accommodation.name;
+        if (pt.name && (pt.name.includes(hotelName.substring(0, 4)) || hotelName.includes(pt.name.substring(0, 4)))) {
+          hotelNav = pt; break;
+        }
+      }
+      const hHasNav = hotelNav || day.accommodation.navLng;
+      html += `<div class="info-card hotel"><div class="info-card-label">🏨 住宿 <button class="edit-btn" onclick="openEditModal('hotel')" title="编辑">✎</button></div><div class="info-card-name">${day.accommodation.name}</div><div class="info-card-dishes">${day.accommodation.notes || ''}</div>${hHasNav ? `<button class="tc-nav-btn" style="margin-top:4px;" onclick="openNav('${(hotelNav ? hotelNav.name : day.accommodation.name).replace(/'/g, "\\'")}', ${hotelNav ? hotelNav.lng : day.accommodation.navLng}, ${hotelNav ? hotelNav.lat : day.accommodation.navLat})">🧭 导航</button>` : ''}</div>`;
+    }
+    html += '</div></div>';
+  }
+
+  // 一键导航 — 保留未在时间线/餐饮中匹配到的剩余 navPoints
+  const usedNavNames = new Set();
+  day.timeline.forEach(event => {
+    for (const pt of day.navPoints) {
+      if (event.activity.includes(pt.name) || (pt.name.split(/[·(（]/)[0].trim().length > 1 && event.activity.includes(pt.name.split(/[·(（]/)[0].trim()))) {
+        usedNavNames.add(pt.name); break;
+      }
+    }
+  });
+  const remainingNav = day.navPoints.filter(pt => !usedNavNames.has(pt.name));
+  if (remainingNav.length > 0) {
+    html += '<div class="day-section"><div class="day-section-title">🧭 更多导航 <button class="edit-btn" onclick="openEditModal(\'navPoint\',-1)" title="添加导航点">+</button></div><div class="nav-buttons">';
+    remainingNav.forEach((pt, idx) => {
+      const origIdx = day.navPoints.indexOf(pt);
+      html += `<div style="display:inline-flex;align-items:center;gap:2px;margin:0 4px 6px 0;"><button class="nav-btn" onclick="openNav('${pt.name.replace(/'/g, "\\'")}', ${pt.lng}, ${pt.lat})"><span class="nav-btn-icon">📍</span>${pt.name}</button><button class="edit-btn edit-btn-inline" onclick="openEditModal('navPoint',${origIdx})" title="编辑">✎</button></div>`;
     });
     html += '</div></div>';
   }
 
-  // Meals & Hotel
-  if (day.meals.length > 0 || day.accommodation) {
-    html += '<div class="info-grid">';
-    day.meals.forEach((meal, idx) => {
-      const mc = meal.type.includes('午') || meal.type.includes('简') ? 'lunch' : 'dinner';
-      html += `<div class="info-card ${mc}"><div class="info-card-label">🍽️ ${meal.type} <button class="edit-btn" onclick="openEditModal('meal',${idx})" title="编辑">✎</button></div><div class="info-card-name">${meal.name}</div><div class="info-card-dishes">${meal.dishes}</div>${meal.navLng ? `<button class="nav-btn nav-btn-mini" style="margin-top:6px;" onclick="openNav('${meal.name.replace(/'/g, "\\'")}', ${meal.navLng}, ${meal.navLat})">🧭 导航到此</button>` : ''}</div>`;
-    });
-    if (day.accommodation) {
-      html += `<div class="info-card hotel"><div class="info-card-label">🏨 住宿 <button class="edit-btn" onclick="openEditModal('hotel')" title="编辑">✎</button></div><div class="info-card-name">${day.accommodation.name}</div><div class="info-card-dishes">${day.accommodation.notes || ''}</div>${day.accommodation.navLng ? `<button class="nav-btn nav-btn-mini" style="margin-top:6px;" onclick="openNav('${day.accommodation.name.replace(/'/g, "\\'")}', ${day.accommodation.navLng}, ${day.accommodation.navLat})">🧭 导航到此</button>` : ''}</div>`;
-    }
-    html += '</div>';
-  }
-
-  // Nav buttons (editable)
-  html += '<div class="nav-section"><div class="nav-section-title">🧭 一键导航 <button class="edit-btn" onclick="openEditModal(\'navPoint\',-1)" title="添加导航点">+</button></div><div class="nav-buttons">';
-  day.navPoints.forEach((pt, idx) => {
-    const btnClass = idx === day.navPoints.length - 1 ? 'nav-btn-dest' : '';
-    html += `<div style="position:relative;display:inline-flex;align-items:center;gap:2px;"><button class="nav-btn ${btnClass}" onclick="openNav('${pt.name.replace(/'/g, "\\'")}', ${pt.lng}, ${pt.lat})"><span class="nav-btn-icon">📍</span>${pt.name}</button><button class="edit-btn edit-btn-inline" onclick="openEditModal('navPoint',${idx})" title="编辑导航点">✎</button></div>`;
-  });
-  html += '</div></div>';
-
-  // Reservations
+  // 预约提醒
   if (day.reservations.length > 0) {
     html += '<div class="reservation-card"><div class="reservation-card-title">✅ 预约提醒</div>';
     day.reservations.forEach(r => {
@@ -1500,6 +1562,53 @@ function renderDayDetail() {
 
   container.innerHTML = html;
 }
+
+// ==================== RENDER: DAY MINI MAP ====================
+function renderDayMiniMap(day) {
+  // 从 navPoints 提取该天所有有坐标的导航点，绘制迷你路线图
+  const points = day.navPoints.filter(p => p.lng && p.lat);
+  if (points.length === 0) {
+    return '<div style="text-align:center;color:var(--text-muted);font-size:11px;padding:8px;">🗺️<br>暂无路线</div>';
+  }
+  // 取起点和终点
+  const start = points[0];
+  const end = points[points.length - 1];
+  // 计算边界
+  const lngs = points.map(p => p.lng);
+  const lats = points.map(p => p.lat);
+  const minLng = Math.min(...lngs) - 0.05;
+  const maxLng = Math.max(...lngs) + 0.05;
+  const minLat = Math.min(...lats) - 0.05;
+  const maxLat = Math.max(...lats) + 0.05;
+  const rangeX = maxLng - minLng || 0.1;
+  const rangeY = maxLat - minLat || 0.1;
+  const padX = 30, padY = 30, W = 130, H = 130;
+
+  const toX = (lng) => padX + (lng - minLng) / rangeX * (W - 2 * padX);
+  const toY = (lat) => padY + (maxLat - lat) / rangeY * (H - 2 * padY);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  // 连线
+  for (let i = 1; i < points.length; i++) {
+    svg += `<line x1="${toX(points[i-1].lng)}" y1="${toY(points[i-1].lat)}" x2="${toX(points[i].lng)}" y2="${toY(points[i].lat)}" stroke="#4a9c6c" stroke-width="2" stroke-dasharray="3 2" opacity="0.6"/>`;
+  }
+  // 节点
+  points.forEach((p, i) => {
+    const isStart = i === 0, isEnd = i === points.length - 1;
+    const r = isStart || isEnd ? 5 : 3;
+    const fill = isStart ? '#4a9c6c' : isEnd ? '#d94a5d' : '#5b9bd5';
+    svg += `<circle cx="${toX(p.lng)}" cy="${toY(p.lat)}" r="${r}" fill="${fill}" stroke="#fff" stroke-width="1.5"/>`;
+  });
+  // 起点/终点标签
+  svg += `<text x="${toX(start.lng)}" y="${toY(start.lat) - 8}" text-anchor="middle" font-size="9" fill="#4a9c6c" font-weight="600">起</text>`;
+  if (points.length > 1) {
+    svg += `<text x="${toX(end.lng)}" y="${toY(end.lat) - 8}" text-anchor="middle" font-size="9" fill="#d94a5d" font-weight="600">终</text>`;
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+// ==================== INTERACTIONS ====================
 
 // ==================== INTERACTIONS ====================
 function openNav(name, lng, lat) {
