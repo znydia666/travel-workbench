@@ -927,12 +927,29 @@ function loadTripData() {
     const raw = localStorage.getItem('travel_workbench_trip_data');
     if (raw) {
       const saved = JSON.parse(raw);
-      // Validate saved data structure
-      if (saved && saved.days && Array.isArray(saved.days) && saved.days.length === DEFAULT_TRIP_DATA.days.length) {
+      // 验证基本结构
+      if (saved && saved.days && Array.isArray(saved.days) && saved.days.length > 0) {
+        // 智能合并：用户编辑的 days 优先，但用源码的 meta/monitoredCities 等固定数据
+        // 如果源码 days 数量变化（新增或删除），以源码为准但保留已有 day 的用户编辑
+        const mergedDays = DEFAULT_TRIP_DATA.days.map((defDay, idx) => {
+          const savedDay = saved.days.find(d => d.id === defDay.id);
+          if (savedDay) {
+            // 保留用户编辑的字段，补充源码中新增的字段
+            return {
+              ...defDay,              // 源码默认值兜底
+              ...savedDay,           // 用户编辑覆盖
+              // 以下字段始终以源码为准（结构性字段）
+              id: defDay.id,
+              label: defDay.label,
+              date: defDay.date,
+            };
+          }
+          return defDay; // 源码新增的 day
+        });
         return {
           meta: DEFAULT_TRIP_DATA.meta,
           monitoredCities: DEFAULT_TRIP_DATA.monitoredCities,
-          days: saved.days,
+          days: mergedDays,
           bookingTable: DEFAULT_TRIP_DATA.bookingTable,
           travelTips: DEFAULT_TRIP_DATA.travelTips
         };
