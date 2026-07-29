@@ -1319,6 +1319,22 @@ function renderOverview() {
 
   let html = renderNotificationPanel();
 
+  // Route Map
+  html += `
+  <div class="overview-card route-map-card">
+    <div class="overview-card-header">
+      <div class="overview-card-icon green">🗺️</div>
+      <div><div class="overview-card-title">行程路线图</div><div class="overview-card-subtitle">北疆大环线 · 点击节点查看详情</div></div>
+    </div>
+    ${renderRouteMap()}
+    <div class="route-map-legend">
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--primary-green)"></span>起点/终点</div>
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--sky-blue)"></span>途径城市</div>
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--desert-orange)"></span>核心景区</div>
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--lake-cyan)"></span>自然风光</div>
+    </div>
+  </div>`;
+
   // Trip summary
   html += `
   <div class="overview-card">
@@ -1338,35 +1354,6 @@ function renderOverview() {
       <div class="stat-item"><div class="stat-value">${meta.stats.totalDistance}</div><div class="stat-label">总里程</div></div>
       <div class="stat-item"><div class="stat-value">${meta.stats.avgDrivePerDay}</div><div class="stat-label">日均驾驶</div></div>
       <div class="stat-item"><div class="stat-value">${meta.stats.attractions}</div><div class="stat-label">景点数</div></div>
-    </div>
-  </div>`;
-
-  // Timeline
-  html += `
-  <div class="overview-card">
-    <div class="overview-card-header">
-      <div class="overview-card-icon blue">📅</div>
-      <div><div class="overview-card-title">行程总览</div><div class="overview-card-subtitle">点击日期节点查看详情</div></div>
-    </div>
-    <div class="timeline-horizontal">`;
-  tripData.days.forEach((day, idx) => {
-    html += `<div class="timeline-node" onclick="navigateToDay(${idx})" title="${day.label} ${day.date} ${day.route}"><div class="timeline-dot"></div><div class="timeline-label">${day.label}</div><div class="timeline-date">${day.date}</div></div>`;
-  });
-  html += '</div></div>';
-
-  // Route Map
-  html += `
-  <div class="overview-card route-map-card">
-    <div class="overview-card-header">
-      <div class="overview-card-icon green">🗺️</div>
-      <div><div class="overview-card-title">行程路线图</div><div class="overview-card-subtitle">北疆大环线 · 点击节点查看详情</div></div>
-    </div>
-    ${renderRouteMap()}
-    <div class="route-map-legend">
-      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--primary-green)"></span>起点/终点</div>
-      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--sky-blue)"></span>途径城市</div>
-      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--desert-orange)"></span>核心景区</div>
-      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--lake-cyan)"></span>自然风光</div>
     </div>
   </div>`;
 
