@@ -620,10 +620,7 @@ body::before {
   </div>
 </div>
 
-<footer class="app-footer">
-  <button onclick="exportTripData()" style="background:var(--primary-green);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:14px;cursor:pointer;margin-bottom:8px;">📋 导出行程数据</button>
-  <br>新疆gogogo · 9天北疆自驾 · 实时交通+天气 · 高德地图导航
-</footer>
+<footer class="app-footer">新疆gogogo · 9天北疆自驾 · 实时交通+天气 · 高德地图导航</footer>
 
 <script>
 // ==================== CONFIG ====================
@@ -687,10 +684,12 @@ const DEFAULT_TRIP_DATA = {
       reservations: [{ item: '全线景点均免费', channel: '无需预约', daysAhead: '-' }],
       navPoints: [
         { name: '克拉美丽沙漠公园', lng: 88.1435, lat: 44.7690 },
-        { name: '海上魔鬼城观景台', lng: 87.4867, lat: 47.1138 },
+        { name: '海上魔鬼城', lng: 87.486205, lat: 46.996356 },
         { name: '乌伦古湖金沙滩', lng: 87.3532, lat: 47.0219 },
         { name: '阿勒泰将军山观景台', lng: 88.1368, lat: 47.8587 },
-        { name: '全季酒店(阿勒泰五百里风情街店)', lng: 88.1308, lat: 47.8525 }
+        { name: '全季酒店(阿勒泰五百里风情街店)', lng: 88.1308, lat: 47.8525 },
+        { name: '金沙湾大盘鸡(福海店)', lng: 87.494012, lat: 47.113568 },
+        { name: '小渔村鱼馆·新疆菜·烧烤·本地冷水鱼', lng: 88.12386, lat: 47.803223 }
       ]
     },
     {
@@ -711,7 +710,11 @@ const DEFAULT_TRIP_DATA = {
       accommodation: { name: '禾木村树说民宿', notes: '景区村内木屋民宿' },
       driveTime: '约4h',
       reservations: [{ item: '禾木+喀纳斯全域门票', channel: '喀纳斯景区公众号/原行网小程序', daysAhead: '提前7天' }],
-      navPoints: [{ name: '禾木门票站', lng: 87.4678, lat: 48.5681 }]
+      navPoints: [
+        { name: '禾木门票站', lng: 87.4678, lat: 48.5681 },
+        { name: '格桑花餐厅', lng: 87.436864, lat: 48.5713 },
+        { name: '禾木树说民宿', lng: 87.439889, lat: 48.578598 }
+      ]
     },
     {
       id: 3, label: 'Day 3', date: '8月3日', route: '禾木 → 喀纳斯',
@@ -733,7 +736,10 @@ const DEFAULT_TRIP_DATA = {
       accommodation: { name: '喀纳斯景区内一水云间酒店', notes: '景区内住宿' },
       driveTime: '约3.5h',
       reservations: [{ item: '喀纳斯门票已预约', channel: '无需额外预约', daysAhead: '-' }],
-      navPoints: [{ name: '喀纳斯贾登峪门票站', lng: 87.1445, lat: 48.5056 }]
+      navPoints: [
+        { name: '喀纳斯贾登峪门票站', lng: 87.1445, lat: 48.5056 },
+        { name: '喀纳斯清·一水云间酒店', lng: 87.030785, lat: 48.707239 }
+      ]
     },
     {
       id: 4, label: 'Day 4', date: '8月4日', route: '喀纳斯 → 乌尔禾',
@@ -755,7 +761,9 @@ const DEFAULT_TRIP_DATA = {
       reservations: [{ item: '喀纳斯观鱼台区间车', channel: '喀纳斯景区公众号', daysAhead: '当日线上预约' }],
       navPoints: [
         { name: '乌尔禾世界魔鬼城', lng: 85.7885, lat: 46.1234 },
-        { name: '全季酒店(乌尔禾油建北路店)', lng: 85.6950, lat: 46.0889 }
+        { name: '全季酒店(乌尔禾油建北路店)', lng: 85.6950, lat: 46.0889 },
+        { name: '沙湾大盘鸡(喀纳斯换乘中心)', lng: 86.868162, lat: 47.704582 },
+        { name: '阿吾丹的烤羊·新疆菜·羊拐抓饭(乌尔禾店)', lng: 85.69748, lat: 46.099283 }
       ]
     },
     {
@@ -779,7 +787,9 @@ const DEFAULT_TRIP_DATA = {
       reservations: [{ item: '赛里木湖自驾环湖套票', channel: '一部手机游赛湖小程序', daysAhead: '提前7天（限3000台/日）' }],
       navPoints: [
         { name: '赛里木湖东门游客中心', lng: 81.3065, lat: 44.6200 },
-        { name: '桔子水晶酒店(赛湖东门)', lng: 81.3100, lat: 44.6180 }
+        { name: '桔子水晶酒店(赛湖东门)', lng: 81.3100, lat: 44.6180 },
+        { name: '月亮湾高白鲑餐厅', lng: 81.376339, lat: 44.606022 },
+        { name: '东门丝路风情街·赛湖牧人家宴', lng: 81.388725, lat: 44.619025 }
       ]
     },
     {
@@ -787,7 +797,7 @@ const DEFAULT_TRIP_DATA = {
       timeline: [
         { time: '08:00', activity: '二次入园，<strong>松树头观景台</strong>俯瞰赛湖全景2.5h', type: 'activity' },
         { time: '10:30', activity: '南门驶出，<strong>果子沟大桥</strong>打卡，前往那拉提', type: 'drive' },
-        { time: '午间', activity: '🍽️ 午餐：新源<strong>回民拌面王</strong> — 过油肉拌面', type: 'mealtime' },
+        { time: '午间', activity: '🍽️ 午餐：新源<strong>马氏正宗牛肉面</strong> — 过油肉拌面', type: 'mealtime' },
         { time: '傍晚', activity: '抵达<strong>那拉提镇</strong>入住休整', type: 'activity' },
         { time: '晚间', activity: '🍽️ 晚餐：<strong>疆满提新疆主题餐厅</strong>', type: 'mealtime' },
         { time: '晚间', activity: '入住 <strong>全季酒店(那拉提天马街店)</strong>', type: 'hotel' }
@@ -805,7 +815,9 @@ const DEFAULT_TRIP_DATA = {
       navPoints: [
         { name: '赛里木湖松树头观景台', lng: 81.2135, lat: 44.4950 },
         { name: '果子沟大桥', lng: 81.1489, lat: 44.4650 },
-        { name: '全季酒店(那拉提天马街店)', lng: 84.1105, lat: 43.3685 }
+        { name: '全季酒店(那拉提天马街店)', lng: 84.1105, lat: 43.3685 },
+        { name: '马氏正宗牛肉面(新源县城)', lng: 84.014149, lat: 43.324802 },
+        { name: '疆满提·遇见新疆菜', lng: 84.011356, lat: 43.324274 }
       ]
     },
     {
@@ -850,7 +862,8 @@ const DEFAULT_TRIP_DATA = {
       reservations: [{ item: '天山胜利隧道', channel: '无需预约', daysAhead: '-' }],
       navPoints: [
         { name: '巴音布鲁克景区', lng: 84.1234, lat: 43.0200 },
-        { name: '亚朵酒店(乌鲁木齐友好路店)', lng: 87.5850, lat: 43.8180 }
+        { name: '亚朵酒店(乌鲁木齐友好路店)', lng: 87.5850, lat: 43.8180 },
+        { name: '胖老汉·宴会厅(友好店)', lng: 87.589619, lat: 43.823357 }
       ]
     },
     {
@@ -1870,13 +1883,6 @@ document.addEventListener('touchmove', (e) => {
 document.addEventListener('wheel', (e) => {
   if (e.ctrlKey) e.preventDefault();
 }, { passive: false });
-
-// ==================== EXPORT ====================
-function exportTripData() {
-  const data = JSON.stringify(tripData, null, 2);
-  // iOS Safari 不支持 navigator.clipboard，用 prompt 弹窗
-  prompt('👇 全选复制下面的数据，粘贴发给 WorkBuddy', data);
-}
 
 // ==================== INIT ====================
 async function init() {
