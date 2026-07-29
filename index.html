@@ -2201,16 +2201,28 @@ document.addEventListener('wheel', (e) => {
 
 // ==================== INIT ====================
 async function init() {
-  // Safety: clear corrupted localStorage data
+  // Safety: clear corrupted or outdated localStorage data
+  const DATA_VERSION = 2; // 递增此数字可强制清除所有用户的旧缓存
   try {
     const raw = localStorage.getItem('travel_workbench_trip_data');
-    if (raw) {
+    const ver = localStorage.getItem('travel_workbench_data_version');
+    if (raw && ver !== String(DATA_VERSION)) {
+      // 版本不匹配，清除旧缓存
+      localStorage.removeItem('travel_workbench_trip_data');
+      localStorage.setItem('travel_workbench_data_version', String(DATA_VERSION));
+    } else if (raw) {
       const saved = JSON.parse(raw);
       if (!saved || !saved.days || !Array.isArray(saved.days) || saved.days.length !== DEFAULT_TRIP_DATA.days.length) {
         localStorage.removeItem('travel_workbench_trip_data');
+        localStorage.setItem('travel_workbench_data_version', String(DATA_VERSION));
       }
+    } else {
+      localStorage.setItem('travel_workbench_data_version', String(DATA_VERSION));
     }
-  } catch(e) { localStorage.removeItem('travel_workbench_trip_data'); }
+  } catch(e) {
+    localStorage.removeItem('travel_workbench_trip_data');
+    localStorage.setItem('travel_workbench_data_version', String(DATA_VERSION));
+  }
 
   try {
     tripData = loadTripData();
