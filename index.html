@@ -982,12 +982,20 @@ function saveManualNotifications() {
 // ==================== LIVE DATA FETCHING ====================
 
 // ==================== QWEATHER CONFIG ====================
-const QWEATHER_KEY = 'cf81dc02930347d28bc0872a691a79dd';
+const QWEATHER_KEY = 'faa5a2d6cea447cf81b64133dfff8ab4';
 let qweatherAvailable = null; // null=unknown, true=available, false=fallback
 
-// Fetch weather from QWeather API, fallback to public API if unavailable
+// Fetch weather from QWeather API, fallback to wttr.in if unavailable
 async function fetchWeatherData() {
-  // 直接使用 wttr.in 公开 API，无需 API key，不受域名限制
+  if (qweatherAvailable === null) {
+    qweatherAvailable = await probeQWeather();
+  }
+  if (qweatherAvailable) {
+    try {
+      const data = await fetchQWeatherData();
+      if (data.length > 0) return data;
+    } catch(e) { /* fall through to fallback */ }
+  }
   return fetchFallbackWeatherData();
 }
 
