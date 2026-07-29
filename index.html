@@ -1977,7 +1977,9 @@ async function init() {
     tripData = loadTripData();
     // 根据当前日期自动定位到对应 Day
     const today = new Date();
-    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    // DEBUG: 模拟日期验证自动定位功能
+    const todayStr = '2026-08-03'; // TODO: 改回真实日期
+    // const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
     const matchedDay = tripData.days.find(d => d.realDate === todayStr);
     if (matchedDay) {
       currentDayIndex = matchedDay.id;
