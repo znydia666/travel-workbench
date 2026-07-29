@@ -112,6 +112,23 @@ body::before {
 .tab-btn { flex: 1; padding: 7px 0; border: none; background: transparent; color: rgba(255,255,255,0.8); border-radius: var(--radius-full); font-size: var(--font-sm); font-weight: 500; cursor: pointer; transition: var(--transition-fast); text-align: center; }
 .tab-btn.active { background: #fff; color: var(--primary-green); font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 
+/* Export PDF button */
+.btn-print {
+  margin-top: 10px;
+  padding: 7px 18px;
+  border: 1px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  width: 100%;
+  max-width: 260px;
+}
+.btn-print:hover { background: rgba(255,255,255,0.3); }
+
 /* Main Content */
 .main-content { max-width: var(--max-width); margin: 0 auto; padding: 16px; }
 .view { display: none; }
@@ -380,6 +397,23 @@ body::before {
 .booking-urgency.soon { background: var(--desert-orange-light); color: var(--desert-orange); }
 .booking-urgency.normal { background: var(--sky-blue-light); color: var(--sky-blue); }
 
+/* Countdown badges */
+.booking-countdown { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; white-space: nowrap; }
+.booking-countdown.pending { background: var(--primary-green-light); color: var(--primary-green); }
+.booking-countdown.today { background: var(--sunset-red-light); color: var(--sunset-red); animation: pulse-red 1.5s infinite; }
+.booking-countdown.active { background: var(--desert-orange-light); color: var(--desert-orange); }
+.booking-countdown.expired { background: var(--bg); color: var(--text-muted); }
+@keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.booking-date { font-size: var(--font-xs); color: var(--text-secondary); white-space: nowrap; }
+.booking-action-btn { padding: 3px 10px; border: 1px solid var(--primary-green); background: var(--primary-green-light); color: var(--primary-green); border-radius: var(--radius-full); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: var(--transition-fast); }
+.booking-action-btn:hover { background: var(--primary-green); color: #fff; }
+
+/* Filter bar */
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--card-bg); font-size: var(--font-sm); font-weight: 500; cursor: pointer; transition: var(--transition-fast); user-select: none; box-shadow: var(--shadow-sm); }
+.filter-chip.active { background: var(--primary-green-light); border-color: var(--primary-green); color: var(--primary-green); }
+.filter-chip input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary-green); cursor: pointer; }
+
 /* Tips */
 .tip-list { list-style: none; }
 .tip-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: var(--font-sm); line-height: 1.6; }
@@ -593,6 +627,41 @@ body::before {
 @media (min-width: 900px) {
   .info-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ===== Print Styles ===== */
+@media print {
+  .app-header { position: static !important; box-shadow: none !important; background: #4a9c6c !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .tab-bar { display: none !important; }
+  .btn-print { display: none !important; }
+  .btn-refresh { display: none !important; }
+  .notif-add-form { display: none !important; }
+  .edit-btn, .tc-edit-btn, .edit-btn-inline { display: none !important; }
+  .add-event-btn { display: none !important; }
+  .app-footer { display: none !important; }
+  #edit-modal { display: none !important; }
+  .filter-bar { display: none !important; }
+  .booking-action-btn { display: none !important; }
+  .tc-nav-btn, .nav-btn { display: none !important; }
+  .notif-delete { display: none !important; }
+  body { background: #fff !important; background-image: none !important; }
+  body::before { display: none !important; }
+  .main-content { max-width: 100% !important; padding: 0 !important; }
+  .view { display: block !important; }
+  .view.active { animation: none !important; }
+  #view-detail { page-break-before: always; }
+  .route-map-svg { max-width: 170mm !important; height: auto !important; margin: 0 auto; }
+  .overview-card { page-break-inside: avoid; box-shadow: none !important; border: 1px solid var(--border); }
+  .reservation-card { page-break-inside: avoid; }
+  .info-card { page-break-inside: avoid; }
+  .tc-item { page-break-inside: avoid; }
+  .notif-item { page-break-inside: avoid; }
+  body { font-size: 12px !important; }
+  .app-title { font-size: 18px !important; }
+  .overview-card-title { font-size: 15px !important; }
+  .booking-table { font-size: 11px !important; }
+  .booking-table th, .booking-table td { padding: 4px 6px !important; }
+  @page { margin: 12mm; }
+}
 </style>
 </head>
 <body>
@@ -606,6 +675,7 @@ body::before {
       <button class="tab-btn active" onclick="switchView('overview')">📋 总览</button>
       <button class="tab-btn" onclick="switchView('detail')">📅 分日详情</button>
     </div>
+    <button class="btn-print" onclick="exportPDF()">📄 导出PDF</button>
   </div>
 </header>
 
@@ -901,12 +971,12 @@ const DEFAULT_TRIP_DATA = {
   ],
 
   bookingTable: [
-    { item: '禾木+喀纳斯全域门票', channel: '喀纳斯景区公众号/原行网小程序', daysAhead: 7, urgency: 'urgent' },
-    { item: '赛里木湖自驾环湖票', channel: '一部手机游赛湖小程序', daysAhead: 7, urgency: 'urgent' },
-    { item: '喀纳斯观鱼台区间车', channel: '喀纳斯景区公众号', daysAhead: 3, urgency: 'soon' },
-    { item: '那拉提景区门票', channel: '智游那拉提小程序', daysAhead: 3, urgency: 'soon' },
-    { item: '新疆维吾尔自治区博物馆', channel: '新疆博物馆公众号', daysAhead: 1, urgency: 'normal' },
-    { item: '独库公路全线通行', channel: '游新疆一码游小程序', daysAhead: 0, urgency: 'soon' }
+    { item: '禾木+喀纳斯全域门票', channel: '喀纳斯景区公众号/原行网小程序', daysAhead: 7, urgency: 'urgent', searchName: '喀纳斯景区' },
+    { item: '赛里木湖自驾环湖票', channel: '一部手机游赛湖小程序', daysAhead: 7, urgency: 'urgent', searchName: '一部手机游赛湖' },
+    { item: '喀纳斯观鱼台区间车', channel: '喀纳斯景区公众号', daysAhead: 3, urgency: 'soon', searchName: '喀纳斯景区' },
+    { item: '那拉提景区门票', channel: '智游那拉提小程序', daysAhead: 3, urgency: 'soon', searchName: '智游那拉提' },
+    { item: '新疆维吾尔自治区博物馆', channel: '新疆博物馆公众号', daysAhead: 1, urgency: 'normal', searchName: '新疆维吾尔自治区博物馆' },
+    { item: '独库公路全线通行', channel: '游新疆一码游小程序', daysAhead: 0, urgency: 'soon', searchName: '游新疆一码游' }
   ],
 
   travelTips: [
@@ -929,6 +999,9 @@ let lastRefreshTime = null;
 let refreshError = null;
 // Edit modal state
 let editTarget = null; // { dayIdx, section, index }
+// Filter state
+let filterBooking = false;
+let filterTips = false;
 
 // ==================== LOCAL STORAGE ====================
 function loadTripData() {
@@ -1355,12 +1428,51 @@ function renderRouteMap() {
   return svg;
 }
 
+// ==================== HELPERS ====================
+// 计算距抢票日期的倒计时
+function calcCountdown(bookDate) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(bookDate + 'T00:00:00');
+  const diffMs = target - today;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays > 0) {
+    return { text: `还有${diffDays}天`, status: 'pending', days: diffDays };
+  } else if (diffDays === 0) {
+    return { text: '今日抢票！', status: 'today', days: 0 };
+  } else {
+    const tripEnd = new Date('2026-08-09T00:00:00');
+    if (today <= tripEnd) {
+      return { text: '进行中', status: 'active', days: diffDays };
+    } else {
+      return { text: '已截止', status: 'expired', days: diffDays };
+    }
+  }
+}
+
+// 格式化日期为 M月D日
+function formatShortDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
 // ==================== RENDER: OVERVIEW ====================
 function renderOverview() {
   const container = document.getElementById('view-overview');
   const meta = tripData.meta;
 
   let html = renderNotificationPanel();
+
+  // 筛选栏
+  html += `
+  <div class="filter-bar">
+    <label class="filter-chip ${filterBooking ? 'active' : ''}">
+      <input type="checkbox" ${filterBooking ? 'checked' : ''} onchange="toggleFilter('booking', this.checked)"> 只看预约事项
+    </label>
+    <label class="filter-chip ${filterTips ? 'active' : ''}">
+      <input type="checkbox" ${filterTips ? 'checked' : ''} onchange="toggleFilter('tips', this.checked)"> 只看自驾提示
+    </label>
+  </div>`;
 
   // Route Map
   html += `
@@ -1402,24 +1514,32 @@ function renderOverview() {
 
   // Booking table
   html += `
-  <div class="overview-card">
+  <div class="overview-card" data-card-type="booking">
     <div class="overview-card-header">
       <div class="overview-card-icon orange">📋</div>
-      <div><div class="overview-card-title">预约提醒汇总</div><div class="overview-card-subtitle">全程需提前预约的项目</div></div>
+      <div><div class="overview-card-title">预约提醒汇总</div><div class="overview-card-subtitle">全程需提前预约的项目 · 出发日 ${tripData.days[0].date}</div></div>
     </div>
     <div style="overflow-x:auto;"><table class="booking-table">
-      <thead><tr><th>预约项目</th><th>预约渠道</th><th>提前天数</th><th>紧急程度</th></tr></thead>
+      <thead><tr><th>预约项目</th><th>渠道</th><th>抢票日期</th><th>倒计时</th><th>紧急</th><th>直达</th></tr></thead>
       <tbody>`;
   tripData.bookingTable.forEach(b => {
-    const uText = b.daysAhead === 0 ? '当日' : b.daysAhead + '天';
-    const uLabel = b.daysAhead >= 7 ? '紧急预约' : b.daysAhead >= 3 ? '尽快预约' : '常规预约';
-    html += `<tr><td><strong>${b.item}</strong></td><td>${b.channel}</td><td>${uText}</td><td><span class="booking-urgency ${b.urgency}">${uLabel}</span></td></tr>`;
+    const uLabel = b.daysAhead >= 7 ? '紧急' : b.daysAhead >= 3 ? '尽快' : '常规';
+    const cd = calcCountdown(b.bookDate);
+    const dateText = formatShortDate(b.bookDate);
+    html += `<tr>
+      <td><strong>${b.item}</strong></td>
+      <td>${b.channel}</td>
+      <td><span class="booking-date">${dateText}</span></td>
+      <td><span class="booking-countdown ${cd.status}">${cd.text}</span></td>
+      <td><span class="booking-urgency ${b.urgency}">${uLabel}</span></td>
+      <td><button class="booking-action-btn" onclick="copyAndSearch('${b.searchName}')">复制搜索</button></td>
+    </tr>`;
   });
   html += '</tbody></table></div></div>';
 
   // Tips
   html += `
-  <div class="overview-card">
+  <div class="overview-card" data-card-type="tips">
     <div class="overview-card-header">
       <div class="overview-card-icon cyan">💡</div>
       <div><div class="overview-card-title">自驾出行提示</div><div class="overview-card-subtitle">安全驾驶 · 愉快旅行</div></div>
@@ -1491,7 +1611,22 @@ function renderDayDetail() {
     html += '<div class="reservation-card"><div class="reservation-card-title">🔴 预约提醒</div>';
     day.reservations.forEach(r => {
       const isUrgent = r.item.includes('⚠️') || r.item.includes('今晚');
-      html += `<div class="reservation-item" style="${isUrgent ? 'font-weight:700;font-size:var(--font-base);' : ''}"><span class="reservation-item-text">${r.item}</span>${r.channel ? `<span class="reservation-channel">${r.channel}${r.daysAhead ? ' · ' + r.daysAhead : ''}</span>` : ''}</div>`;
+      // 尝试匹配 bookingTable 获取倒计时
+      let countdownHtml = '';
+      const matched = tripData.bookingTable.find(b =>
+        r.item.includes(b.item.split('+')[0]) ||
+        b.item.includes(r.item.substring(0, 4)) ||
+        (b.item.includes('那拉提') && r.item.includes('那拉提')) ||
+        (b.item.includes('赛里木湖') && r.item.includes('赛里木湖')) ||
+        (b.item.includes('喀纳斯') && r.item.includes('喀纳斯')) ||
+        (b.item.includes('独库公路') && r.item.includes('独库公路')) ||
+        (b.item.includes('博物馆') && r.item.includes('博物馆'))
+      );
+      if (matched && matched.bookDate) {
+        const cd = calcCountdown(matched.bookDate);
+        countdownHtml = ` <span class="booking-countdown ${cd.status}" style="margin-left:6px;">${cd.text}</span>`;
+      }
+      html += `<div class="reservation-item" style="${isUrgent ? 'font-weight:700;font-size:var(--font-base);' : ''}"><span class="reservation-item-text">${r.item}${countdownHtml}</span>${r.channel ? `<span class="reservation-channel">${r.channel}${r.daysAhead ? ' · ' + r.daysAhead : ''}</span>` : ''}</div>`;
     });
     html += '</div>';
   }
@@ -1600,6 +1735,102 @@ function switchView(view) {
     document.getElementById('view-detail').classList.add('active');
     renderDayDetail();
   }
+}
+
+// ==================== PDF EXPORT ====================
+function exportPDF() {
+  const prevView = currentView;
+  const detailContainer = document.getElementById('view-detail');
+  const savedDayIdx = currentDayIndex;
+
+  // 先确保总览已渲染
+  renderOverview();
+
+  // 渲染所有天的详情
+  let allDaysHTML = '';
+  for (let i = 0; i < tripData.days.length; i++) {
+    currentDayIndex = i;
+    renderDayDetail();
+    allDaysHTML += `<div class="print-day-block" style="page-break-before: always;"><h2 style="margin-bottom:12px;padding:8px 12px;background:#4a9c6c;color:#fff;border-radius:8px;">${tripData.days[i].label} · ${tripData.days[i].date} · ${tripData.days[i].route}</h2>${detailContainer.innerHTML}</div>`;
+  }
+
+  // 恢复状态
+  currentDayIndex = savedDayIdx;
+  currentView = prevView;
+
+  // 临时替换 detail 内容
+  detailContainer.innerHTML = allDaysHTML;
+  detailContainer.classList.add('active');
+
+  window.print();
+
+  // 打印后恢复
+  setTimeout(() => {
+    if (prevView === 'overview') {
+      detailContainer.classList.remove('active');
+      renderOverview();
+    } else {
+      renderDayDetail();
+    }
+  }, 500);
+}
+
+// ==================== FILTER ====================
+function toggleFilter(type, checked) {
+  if (type === 'booking') filterBooking = checked;
+  if (type === 'tips') filterTips = checked;
+
+  const cards = document.querySelectorAll('#view-overview .overview-card[data-card-type]');
+  cards.forEach(card => {
+    const ct = card.dataset.cardType;
+    if (!filterBooking && !filterTips) {
+      card.style.display = '';
+    } else if (filterBooking && filterTips) {
+      card.style.display = (ct === 'booking' || ct === 'tips') ? '' : 'none';
+    } else if (filterBooking) {
+      card.style.display = (ct === 'booking') ? '' : 'none';
+    } else if (filterTips) {
+      card.style.display = (ct === 'tips') ? '' : 'none';
+    }
+  });
+
+  document.querySelectorAll('.filter-chip').forEach((chip, idx) => {
+    const isActive = idx === 0 ? filterBooking : filterTips;
+    chip.classList.toggle('active', isActive);
+  });
+}
+
+// ==================== COPY & SEARCH ====================
+function copyAndSearch(name) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(name).then(() => showSearchToast(name)).catch(() => { fallbackCopy(name); showSearchToast(name); });
+  } else {
+    fallbackCopy(name);
+    showSearchToast(name);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function showSearchToast(name) {
+  let toast = document.getElementById('search-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'search-toast';
+    toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:#fff;padding:20px 24px;border-radius:14px;font-size:15px;z-index:9999;text-align:center;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<div style="font-size:28px;margin-bottom:8px;">📋</div><div style="font-weight:700;margin-bottom:6px;">已复制：${name}</div><div style="font-size:13px;opacity:0.85;line-height:1.5;">打开微信 → 搜索栏粘贴 → 搜索小程序/公众号</div>`;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }
 
 function changeDay(delta) {
@@ -1980,6 +2211,13 @@ async function init() {
 
   try {
     tripData = loadTripData();
+    // 计算每个预约项目的抢票日期（从出发日倒推）
+    const startDate = new Date(tripData.days[0].realDate + 'T00:00:00');
+    tripData.bookingTable.forEach(b => {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() - b.daysAhead);
+      b.bookDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    });
     // 根据当前日期自动定位到对应 Day
     const today = new Date();
     const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
