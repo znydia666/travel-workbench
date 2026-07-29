@@ -983,6 +983,7 @@ function saveManualNotifications() {
 
 // ==================== QWEATHER CONFIG ====================
 const QWEATHER_KEY = 'faa5a2d6cea447cf81b64133dfff8ab4';
+const QWEATHER_HOST = 'https://ka4d95dc3u.re.qweatherapi.com';
 let qweatherAvailable = null; // null=unknown, true=available, false=fallback
 
 // Fetch weather from QWeather API, fallback to wttr.in if unavailable
@@ -1001,7 +1002,7 @@ async function fetchWeatherData() {
 
 async function probeQWeather() {
   try {
-    const resp = await fetch(`https://devapi.qweather.com/v7/weather/now?location=101130101&key=${QWEATHER_KEY}`);
+    const resp = await fetch(`${QWEATHER_HOST}/v7/weather/now?location=101130101&key=${QWEATHER_KEY}`);
     const data = await resp.json();
     return data.code === '200';
   } catch { return false; }
@@ -1019,7 +1020,7 @@ async function fetchQWeatherData() {
     const dayLabel = day ? `${day.label} · ${day.date}` : '';
 
     try {
-      const nowUrl = `https://devapi.qweather.com/v7/weather/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
+      const nowUrl = `${QWEATHER_HOST}/v7/weather/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
       const nowResp = await fetch(nowUrl);
       const nowData = await nowResp.json();
 
@@ -1053,7 +1054,7 @@ async function fetchQWeatherData() {
     const dayLabel = day ? `${day.label} · ${day.date}` : '';
     warned.add(city.locationId);
     try {
-      const warnUrl = `https://devapi.qweather.com/v7/warning/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
+      const warnUrl = `${QWEATHER_HOST}/v7/warning/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
       const warnResp = await fetch(warnUrl);
       const warnData = await warnResp.json();
       if (warnData.code === '200' && warnData.warning) {
