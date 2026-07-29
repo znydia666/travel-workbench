@@ -1438,8 +1438,18 @@ function renderDayDetail() {
     }
   });
   const routeParts = day.route.split('→').map(s => s.trim());
-  const destCity = routeParts[routeParts.length - 1];
-  const nextDestCity = nextDay ? nextDay.route.split('→').map(s => s.trim()).pop() : null;
+  // 城市名映射：route中的地名 → monitoredCities中实际监控的城市名
+  const cityAlias = {
+    '禾木村': '布尔津', '禾木': '布尔津',
+    '喀纳斯': '布尔津',
+    '乌尔禾': '克拉玛依',
+    '赛里木湖': '博乐',
+    '那拉提': '新源',
+    '巴音布鲁克': '和静',
+    '长沙': '乌鲁木齐'
+  };
+  const destCity = cityAlias[routeParts[routeParts.length - 1]] || routeParts[routeParts.length - 1];
+  const nextDestCity = nextDay ? (cityAlias[nextDay.route.split('→').map(s => s.trim()).pop()] || nextDay.route.split('→').map(s => s.trim()).pop()) : null;
   const w1 = weatherMap[destCity];
   const w2 = nextDestCity ? weatherMap[nextDestCity] : null;
 
