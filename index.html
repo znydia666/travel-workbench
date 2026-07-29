@@ -395,26 +395,16 @@ body::before {
 .day-nav-btn:disabled:hover { background: var(--card-bg); border-color: var(--border); color: var(--text-primary); }
 .day-select { padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-full); font-size: var(--font-sm); font-weight: 600; background: var(--card-bg); color: var(--text-primary); cursor: pointer; box-shadow: var(--shadow-sm); min-width: 180px; text-align: center; }
 
-.day-header-card { background: linear-gradient(135deg, #4a9c6c 0%, #5b9bd5 100%); color: #fff; border-radius: var(--radius-md); padding: 20px 22px; margin-bottom: 16px; box-shadow: var(--shadow-md); }
-.day-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.day-label { font-size: var(--font-xs); opacity: 0.85; font-weight: 500; }
-.day-title { font-size: var(--font-xl); font-weight: 700; line-height: 1.3; }
-.day-drive { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: var(--radius-full); font-size: var(--font-xs); font-weight: 600; }
-
-/* Day detail top: mini-map + info side by side */
-.day-top-row { display: flex; gap: 14px; margin-bottom: 16px; align-items: stretch; }
-.day-mini-map { flex: 0 0 130px; min-height: 130px; background: linear-gradient(135deg, #e8f5e9 0%, #e3f0fa 100%); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-.day-mini-map img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-md); }
-.day-mini-map svg { width: 100%; height: 100%; }
-.day-info-col { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
-.day-info-route { font-size: var(--font-md); font-weight: 700; line-height: 1.3; margin-bottom: 2px; word-break: break-all; }
-.day-info-route .edit-btn { vertical-align: middle; }
-.day-info-drive { font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: 6px; }
-.day-info-weather { display: flex; gap: 8px; font-size: var(--font-xs); flex-wrap: wrap; }
-.day-info-weather-item { display: flex; align-items: center; gap: 4px; background: var(--card-bg); border-radius: var(--radius-sm); padding: 4px 10px; box-shadow: var(--shadow-sm); white-space: nowrap; }
-.day-info-weather-icon { font-size: 16px; }
-.day-info-weather-temp { font-weight: 700; color: var(--primary-green); }
-.day-info-weather-city { color: var(--text-secondary); }
+/* Day header bar: route + weather inline */
+.day-header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; background: linear-gradient(135deg, #4a9c6c 0%, #5b9bd5 100%); color: #fff; border-radius: var(--radius-md); padding: 12px 16px; box-shadow: var(--shadow-md); flex-wrap: wrap; }
+.day-header-bar-left { min-width: 0; }
+.day-header-bar-route { font-size: var(--font-sm); font-weight: 700; line-height: 1.3; opacity: 0.95; }
+.day-header-bar-route .edit-btn { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.day-header-bar-route .edit-btn:hover { color: #fff; border-color: #fff; }
+.day-header-bar-drive { font-size: var(--font-xs); opacity: 0.8; margin-top: 2px; }
+.day-header-bar-weather { display: flex; gap: 12px; font-size: var(--font-xs); opacity: 0.9; flex-shrink: 0; }
+.day-header-bar-weather strong { font-size: var(--font-sm); }
+.dw-icon { font-size: 16px; }
 
 /* Compact timeline with inline nav buttons */
 .timeline-compact { position: relative; padding-left: 24px; }
@@ -492,10 +482,7 @@ body::before {
   border-radius: var(--radius-full); opacity: 0; transition: var(--transition-fast);
   margin-left: 6px; font-weight: 500;
 }
-.timeline-event:hover .edit-btn,
-.event-card:hover .edit-btn,
-.info-card:hover .edit-btn,
-.day-header-card:hover .edit-btn { opacity: 1; }
+.info-card:hover .edit-btn { opacity: 1; }
 .edit-btn:hover { background: var(--primary-green-light); border-color: var(--primary-green); color: var(--primary-green); }
 .edit-btn.danger:hover { background: var(--sunset-red-light); border-color: var(--sunset-red); color: var(--sunset-red); }
 
@@ -1442,7 +1429,7 @@ function renderDayDetail() {
   // 下一天的目的地
   const nextDay = currentDayIndex < tripData.days.length - 1 ? tripData.days[currentDayIndex + 1] : null;
 
-  // 天气数据
+  // 天气数据：直接用首页通知面板已有的 liveNotifications
   const weatherMap = {};
   liveNotifications.forEach(n => {
     if (n.type === 'weather' && n.temp) {
@@ -1450,10 +1437,11 @@ function renderDayDetail() {
       weatherMap[city] = { temp: n.temp, icon: parseFloat(n.temp) > 30 ? '☀️' : parseFloat(n.temp) > 20 ? '🌤️' : parseFloat(n.temp) > 10 ? '🌥️' : '❄️' };
     }
   });
-  // 从 route 中提取目的地城市名
   const routeParts = day.route.split('→').map(s => s.trim());
   const destCity = routeParts[routeParts.length - 1];
   const nextDestCity = nextDay ? nextDay.route.split('→').map(s => s.trim()).pop() : null;
+  const w1 = weatherMap[destCity];
+  const w2 = nextDestCity ? weatherMap[nextDestCity] : null;
 
   let html = `
   <div class="day-nav">
@@ -1464,17 +1452,14 @@ function renderDayDetail() {
     <button class="day-nav-btn" onclick="changeDay(1)" ${isLast ? 'disabled' : ''}>›</button>
   </div>
 
-  <div class="day-top-row">
-    <div class="day-mini-map">${renderDayMiniMap(day)}</div>
-    <div class="day-info-col">
-      <div>
-        <div class="day-info-route">${day.label} · ${day.date} ${day.route} <button class="edit-btn" onclick="openEditModal('dayHeader')" title="编辑路线" style="vertical-align:middle;">✎</button></div>
-        <div class="day-info-drive">🚗 ${day.driveTime}</div>
-      </div>
-      <div class="day-info-weather">
-        ${weatherMap[destCity] ? `<div class="day-info-weather-item"><span class="day-info-weather-icon">${weatherMap[destCity].icon}</span><span class="day-info-weather-temp">${weatherMap[destCity].temp}°C</span><span class="day-info-weather-city">${destCity}</span></div>` : `<div class="day-info-weather-item"><span class="day-info-weather-icon">☁️</span><span class="day-info-weather-city">${destCity}</span></div>`}
-        ${nextDestCity ? (weatherMap[nextDestCity] ? `<div class="day-info-weather-item"><span class="day-info-weather-icon">${weatherMap[nextDestCity].icon}</span><span class="day-info-weather-temp">${weatherMap[nextDestCity].temp}°C</span><span class="day-info-weather-city">→ ${nextDestCity}</span></div>` : `<div class="day-info-weather-item"><span class="day-info-weather-icon">☁️</span><span class="day-info-weather-city">→ ${nextDestCity}</span></div>`) : ''}
-      </div>
+  <div class="day-header-bar">
+    <div class="day-header-bar-left">
+      <div class="day-header-bar-route">${day.label} · ${day.date} · ${day.route} <button class="edit-btn" onclick="openEditModal('dayHeader')" title="编辑">✎</button></div>
+      <div class="day-header-bar-drive">🚗 ${day.driveTime}</div>
+    </div>
+    <div class="day-header-bar-weather">
+      <span>${w1 ? `<span class="dw-icon">${w1.icon}</span> ${destCity} <strong>${w1.temp}°C</strong>` : `☁️ ${destCity}`}</span>
+      ${nextDestCity ? `<span>→ ${w2 ? `<span class="dw-icon">${w2.icon}</span> ${nextDestCity} <strong>${w2.temp}°C</strong>` : `☁️ ${nextDestCity}`}</span>` : ''}
     </div>
   </div>`;
 
@@ -1555,29 +1540,6 @@ function renderDayDetail() {
 
   container.innerHTML = html;
 }
-
-// ==================== RENDER: DAY MINI MAP ====================
-function renderDayMiniMap(day) {
-  // 使用高德静态地图 API 显示实际地图
-  const points = day.navPoints.filter(p => p.lng && p.lat);
-  if (points.length === 0) {
-    return '<div style="text-align:center;color:var(--text-muted);font-size:11px;padding:8px;">🗺️<br>暂无路线</div>';
-  }
-  const AMAP_KEY = '105fd952df7e80ed9eab6ef457a7d51d';
-  const markers = points.map((p, i) => {
-    const label = i === 0 ? '起' : i === points.length - 1 ? '终' : String(i);
-    return `${p.lng},${p.lat},${label}`;
-  }).join('|');
-  // 计算中心点
-  const lngs = points.map(p => p.lng);
-  const lats = points.map(p => p.lat);
-  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-  const url = `https://restapi.amap.com/v3/staticmap?key=${AMAP_KEY}&size=260*260&markers=mid,,A:${markers}&center=${centerLng},${centerLat}&zoom=10&scale=2`;
-  return `<img src="${url}" alt="今日路线" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md);" onerror="this.parentElement.innerHTML='<div style=\\'text-align:center;color:var(--text-muted);font-size:11px;padding:8px;\\'>🗺️<br>地图加载中</div>'">`;
-}
-
-// ==================== INTERACTIONS ====================
 
 // ==================== INTERACTIONS ====================
 function openNav(name, lng, lat) {
