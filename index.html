@@ -457,12 +457,13 @@ body::before {
 .nav-btn-mini { padding: 4px 10px; font-size: 11px; width: 100%; justify-content: center; background: var(--sky-blue); box-shadow: none; }
 .nav-btn-mini:hover { background: #4a89c0; }
 
-/* Reservation Card */
-.reservation-card { background: var(--desert-orange-light); border-radius: var(--radius-md); padding: 14px 16px; margin-top: 16px; border-left: 4px solid var(--desert-orange); }
-.reservation-card-title { font-weight: 700; font-size: var(--font-sm); color: var(--desert-orange); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.reservation-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: var(--font-sm); border-bottom: 1px solid rgba(212,149,107,0.15); }
+/* Reservation Card — 红色醒目提醒 */
+.reservation-card { background: #fff5f5; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 16px; border-left: 4px solid #e53e3e; }
+.reservation-card-title { font-weight: 700; font-size: var(--font-base); color: #e53e3e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.reservation-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: var(--font-sm); color: #c53030; border-bottom: 1px solid rgba(229,62,62,0.12); }
 .reservation-item:last-child { border-bottom: none; }
-.reservation-channel { font-size: var(--font-xs); color: var(--text-secondary); }
+.reservation-item .reservation-item-text { color: #c53030; }
+.reservation-channel { font-size: var(--font-xs); color: #e53e3e; }
 
 /* Weather inline card */
 .weather-inline { margin-top: 16px; }
@@ -686,7 +687,10 @@ const DEFAULT_TRIP_DATA = {
       ],
       accommodation: { name: '全季酒店(阿勒泰五百里风情街店)', notes: '阿勒泰市区' },
       driveTime: '约6.5h',
-      reservations: [{ item: '全线景点均免费', channel: '无需预约', daysAhead: '-' }],
+      reservations: [
+        { item: '全线景点均免费，无需预约', channel: '', daysAhead: '' },
+        { item: '⚠️ 今晚8:00预约8.7那拉提自驾门票！', channel: '微信小程序：智游那拉提', daysAhead: '限时限量！' }
+      ],
       navPoints: [
         { name: '克拉美丽沙漠公园', lng: 88.1435, lat: 44.7690 },
         { name: '海上魔鬼城', lng: 87.486205, lat: 46.996356 },
@@ -1482,6 +1486,16 @@ function renderDayDetail() {
     </div>
   </div>`;
 
+  // 预约提醒 — 放在最前面，红色醒目
+  if (day.reservations.length > 0) {
+    html += '<div class="reservation-card"><div class="reservation-card-title">🔴 预约提醒</div>';
+    day.reservations.forEach(r => {
+      const isUrgent = r.item.includes('⚠️') || r.item.includes('今晚');
+      html += `<div class="reservation-item" style="${isUrgent ? 'font-weight:700;font-size:var(--font-base);' : ''}"><span class="reservation-item-text">${r.item}</span>${r.channel ? `<span class="reservation-channel">${r.channel}${r.daysAhead ? ' · ' + r.daysAhead : ''}</span>` : ''}</div>`;
+    });
+    html += '</div>';
+  }
+
   // Timeline — 紧凑版，navPoints 匹配的直接出导航按钮
   html += '<div class="timeline-compact">';
   day.timeline.forEach((event, idx) => {
@@ -1546,15 +1560,6 @@ function renderDayDetail() {
       html += `<div style="display:inline-flex;align-items:center;gap:2px;margin:0 4px 6px 0;"><button class="nav-btn" onclick="openNav('${pt.name.replace(/'/g, "\\'")}', ${pt.lng}, ${pt.lat})"><span class="nav-btn-icon">📍</span>${pt.name}</button><button class="edit-btn edit-btn-inline" onclick="openEditModal('navPoint',${origIdx})" title="编辑">✎</button></div>`;
     });
     html += '</div></div>';
-  }
-
-  // 预约提醒
-  if (day.reservations.length > 0) {
-    html += '<div class="reservation-card"><div class="reservation-card-title">✅ 预约提醒</div>';
-    day.reservations.forEach(r => {
-      html += `<div class="reservation-item"><span><strong>${r.item}</strong></span><span class="reservation-channel">${r.channel} · ${r.daysAhead}</span></div>`;
-    });
-    html += '</div>';
   }
 
   container.innerHTML = html;
@@ -1977,9 +1982,7 @@ async function init() {
     tripData = loadTripData();
     // 根据当前日期自动定位到对应 Day
     const today = new Date();
-    // DEBUG: 模拟日期验证自动定位功能
-    const todayStr = '2026-08-03'; // TODO: 改回真实日期
-    // const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
     const matchedDay = tripData.days.find(d => d.realDate === todayStr);
     if (matchedDay) {
       currentDayIndex = matchedDay.id;
