@@ -408,6 +408,15 @@ body::before {
 .booking-action-btn { padding: 3px 10px; border: 1px solid var(--primary-green); background: var(--primary-green-light); color: var(--primary-green); border-radius: var(--radius-full); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: var(--transition-fast); }
 .booking-action-btn:hover { background: var(--primary-green); color: #fff; }
 
+/* Booking card list */
+.booking-list { display: flex; flex-direction: column; gap: 12px; }
+.booking-item { background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px; box-shadow: var(--shadow-sm); }
+.booking-item-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.booking-item-name { font-weight: 700; font-size: var(--font-base); color: var(--text-primary); line-height: 1.4; }
+.booking-item-channel { font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: 10px; line-height: 1.4; }
+.booking-item-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.booking-meta-tag { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 500; color: var(--text-secondary); background: var(--bg); white-space: nowrap; }
+
 /* Filter bar */
 .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--card-bg); font-size: var(--font-sm); font-weight: 500; cursor: pointer; transition: var(--transition-fast); user-select: none; box-shadow: var(--shadow-sm); }
@@ -1522,23 +1531,25 @@ function renderOverview() {
       <div class="overview-card-icon orange">📋</div>
       <div><div class="overview-card-title">预约提醒汇总</div><div class="overview-card-subtitle">全程需提前预约的项目 · 出发日 ${tripData.days[0].date}</div></div>
     </div>
-    <div style="overflow-x:auto;"><table class="booking-table">
-      <thead><tr><th>预约项目</th><th>渠道</th><th>抢票日期</th><th>倒计时</th><th>紧急</th><th>直达</th></tr></thead>
-      <tbody>`;
+    <div class="booking-list">`;
   tripData.bookingTable.forEach(b => {
     const uLabel = b.daysAhead >= 7 ? '紧急' : b.daysAhead >= 3 ? '尽快' : '常规';
     const cd = calcCountdown(b.bookDate);
     const dateText = formatShortDate(b.bookDate);
-    html += `<tr>
-      <td><strong>${b.item}</strong></td>
-      <td>${b.channel}</td>
-      <td><span class="booking-date">${dateText}</span></td>
-      <td><span class="booking-countdown ${cd.status}">${cd.text}</span></td>
-      <td><span class="booking-urgency ${b.urgency}">${uLabel}</span></td>
-      <td><button class="booking-action-btn" onclick="copyAndSearch('${b.searchName}')">复制搜索</button></td>
-    </tr>`;
+    html += `<div class="booking-item">
+      <div class="booking-item-header">
+        <div class="booking-item-name">${b.item}</div>
+        <button class="booking-action-btn" onclick="copyAndSearch('${b.searchName}')">📋 复制</button>
+      </div>
+      <div class="booking-item-channel">${b.channel}</div>
+      <div class="booking-item-meta">
+        <span class="booking-meta-tag">📅 抢票：${dateText}</span>
+        <span class="booking-countdown ${cd.status}">${cd.text}</span>
+        <span class="booking-urgency ${b.urgency}">${uLabel}</span>
+      </div>
+    </div>`;
   });
-  html += '</tbody></table></div></div>';
+  html += '</div></div>';
 
   // Tips
   html += `
