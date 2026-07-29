@@ -620,7 +620,10 @@ body::before {
   </div>
 </div>
 
-<footer class="app-footer">新疆gogogo · 9天北疆自驾 · 实时交通+天气 · 高德地图导航</footer>
+<footer class="app-footer">
+  <button onclick="exportTripData()" style="background:var(--primary-green);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:14px;cursor:pointer;margin-bottom:8px;">📋 导出行程数据</button>
+  <br>新疆gogogo · 9天北疆自驾 · 实时交通+天气 · 高德地图导航
+</footer>
 
 <script>
 // ==================== CONFIG ====================
@@ -1867,6 +1870,13 @@ document.addEventListener('touchmove', (e) => {
 document.addEventListener('wheel', (e) => {
   if (e.ctrlKey) e.preventDefault();
 }, { passive: false });
+
+// ==================== EXPORT ====================
+function exportTripData() {
+  const data = JSON.stringify(tripData, null, 2);
+  // iOS Safari 不支持 navigator.clipboard，用 prompt 弹窗
+  prompt('👇 全选复制下面的数据，粘贴发给 WorkBuddy', data);
+}
 
 // ==================== INIT ====================
 async function init() {
