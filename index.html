@@ -327,6 +327,21 @@ body::before {
 .overview-card-title { font-weight: 700; font-size: var(--font-lg); }
 .overview-card-subtitle { font-size: var(--font-sm); color: var(--text-secondary); }
 
+/* Route Map */
+.route-map-card { position: relative; }
+.route-map-svg { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); background: linear-gradient(135deg, #f0f7f0 0%, #e3f0fa 50%, #e0f5f5 100%); }
+.route-map-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: var(--font-xs); color: var(--text-secondary); }
+.route-map-legend-item { display: flex; align-items: center; gap: 4px; }
+.route-map-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.route-node-group { cursor: pointer; }
+.route-node-group .route-node-circle { transition: r 0.2s ease, stroke-width 0.2s ease; }
+.route-node-group:hover .route-node-circle { r: 10; stroke-width: 3; }
+.route-node-label { font-size: 11px; font-weight: 600; fill: #333; pointer-events: none; }
+.route-node-sublabel { font-size: 9px; fill: #666; pointer-events: none; }
+.route-edge { stroke-dasharray: 6 4; animation: routeDash 1.5s linear infinite; }
+@keyframes routeDash { to { stroke-dashoffset: -20; } }
+.route-legend-day { font-size: 10px; fill: var(--text-muted); pointer-events: none; font-weight: 500; }
+
 /* Flight Info */
 .flight-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: var(--font-sm); }
 .flight-icon { font-size: 18px; flex-shrink: 0; }
@@ -1223,6 +1238,91 @@ function deleteManualNotification(id) {
   renderOverview();
 }
 
+// ==================== RENDER: ROUTE MAP ====================
+function renderRouteMap() {
+  // 节点坐标基于北疆实际地理位置大致布局 (viewBox 400 360)
+  const nodes = [
+    { id: 0, name: '乌鲁木齐', x: 295, y: 295, type: 'hub', day: 0 },
+    { id: 1, name: '阿勒泰', x: 250, y: 55, type: 'city', day: 1 },
+    { id: 2, name: '禾木村', x: 170, y: 40, type: 'scenic', day: 2 },
+    { id: 3, name: '喀纳斯', x: 110, y: 35, type: 'scenic', day: 3 },
+    { id: 4, name: '乌尔禾', x: 195, y: 175, type: 'city', day: 4 },
+    { id: 5, name: '赛里木湖', x: 60, y: 225, type: 'nature', day: 5 },
+    { id: 6, name: '那拉提', x: 130, y: 275, type: 'scenic', day: 6 },
+    { id: 7, name: '巴音布鲁克', x: 205, y: 255, type: 'nature', day: 7 }
+  ];
+  const colors = {
+    hub: 'var(--primary-green)',
+    city: 'var(--sky-blue)',
+    scenic: 'var(--desert-orange)',
+    nature: 'var(--lake-cyan)'
+  };
+  const colorHex = {
+    hub: '#4a9c6c', city: '#5b9bd5', scenic: '#d4956b', nature: '#3ca8a8'
+  };
+  // 路线段：from -> to，对应天数
+  const edges = [
+    { from: 0, to: 1, day: 'Day 0-1' }, // 乌鲁木齐→阿勒泰
+    { from: 1, to: 2, day: 'Day 2' },   // 阿勒泰→禾木
+    { from: 2, to: 3, day: 'Day 3' },   // 禾木→喀纳斯
+    { from: 3, to: 4, day: 'Day 4' },   // 喀纳斯→乌尔禾
+    { from: 4, to: 5, day: 'Day 5' },   // 乌尔禾→赛里木湖
+    { from: 5, to: 6, day: 'Day 6' },   // 赛里木湖→那拉提
+    { from: 6, to: 7, day: 'Day 7' },   // 那拉提→巴音布鲁克
+    { from: 7, to: 0, day: 'Day 8' }    // 巴音布鲁克→乌鲁木齐
+  ];
+
+  let svg = '<svg class="route-map-svg" viewBox="0 0 400 360" xmlns="http://www.w3.org/2000/svg">';
+  // 装饰：简化地形纹理
+  svg += '<rect x="0" y="0" width="400" height="360" fill="none"/>';
+  // 山脉示意（北部阿尔泰山）
+  svg += '<path d="M 40 80 Q 90 50 140 75 Q 190 45 240 70 Q 280 50 320 80" stroke="#c8e6c9" stroke-width="1.5" fill="none" opacity="0.6"/>';
+  svg += '<path d="M 40 95 Q 90 65 140 90 Q 190 60 240 85 Q 280 65 320 95" stroke="#c8e6c9" stroke-width="1" fill="none" opacity="0.4"/>';
+  // 河流示意（额尔齐斯河/伊犁河）
+  svg += '<path d="M 90 45 Q 140 50 180 42 Q 220 38 260 48" stroke="#bbdefb" stroke-width="1.5" fill="none" opacity="0.5"/>';
+  svg += '<path d="M 50 260 Q 100 280 140 270 Q 180 260 210 255" stroke="#bbdefb" stroke-width="1.5" fill="none" opacity="0.5"/>';
+  // 天山示意
+  svg += '<path d="M 100 300 Q 160 275 220 300 Q 280 275 340 300" stroke="#c8e6c9" stroke-width="1.5" fill="none" opacity="0.5"/>';
+
+  // 绘制路线边（带动画虚线）
+  edges.forEach((e, i) => {
+    const from = nodes[e.from], to = nodes[e.to];
+    // 用曲线连接，增加美观度
+    const mx = (from.x + to.x) / 2;
+    const my = (from.y + to.y) / 2;
+    // 控制点偏移，让弧线向外凸
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    const offset = 12;
+    const cx = mx + (-dy/len) * offset;
+    const cy = my + (dx/len) * offset;
+    svg += `<path class="route-edge" d="M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}" stroke="#999" stroke-width="2" fill="none" opacity="0.7"/>`;
+    // 天数标签放在弧线中点
+    svg += `<text class="route-legend-day" x="${mx}" y="${my - 6}" text-anchor="middle">${e.day}</text>`;
+  });
+
+  // 绘制节点
+  nodes.forEach(n => {
+    const hex = colorHex[n.type];
+    const dayIdx = n.day;
+    svg += `<g class="route-node-group" onclick="navigateToDay(${dayIdx})">`;
+    svg += `<circle class="route-node-circle" cx="${n.x}" cy="${n.y}" r="7" fill="${hex}" stroke="#fff" stroke-width="2"/>`;
+    // 起点终点用双圈标记
+    if (n.type === 'hub') {
+      svg += `<circle cx="${n.x}" cy="${n.y}" r="11" fill="none" stroke="${hex}" stroke-width="1.5" opacity="0.5"/>`;
+    }
+    // 标签
+    const labelY = n.y < 60 ? n.y - 14 : n.y + 18;
+    const subY = n.y < 60 ? n.y - 26 : n.y + 30;
+    svg += `<text class="route-node-label" x="${n.x}" y="${labelY}" text-anchor="middle">${n.name}</text>`;
+    svg += `<text class="route-node-sublabel" x="${n.x}" y="${subY}" text-anchor="middle">Day ${n.day}</text>`;
+    svg += `</g>`;
+  });
+
+  svg += '</svg>';
+  return svg;
+}
+
 // ==================== RENDER: OVERVIEW ====================
 function renderOverview() {
   const container = document.getElementById('view-overview');
@@ -1264,6 +1364,22 @@ function renderOverview() {
     html += `<div class="timeline-node" onclick="navigateToDay(${idx})" title="${day.label} ${day.date} ${day.route}"><div class="timeline-dot"></div><div class="timeline-label">${day.label}</div><div class="timeline-date">${day.date}</div></div>`;
   });
   html += '</div></div>';
+
+  // Route Map
+  html += `
+  <div class="overview-card route-map-card">
+    <div class="overview-card-header">
+      <div class="overview-card-icon green">🗺️</div>
+      <div><div class="overview-card-title">行程路线图</div><div class="overview-card-subtitle">北疆大环线 · 点击节点查看详情</div></div>
+    </div>
+    ${renderRouteMap()}
+    <div class="route-map-legend">
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--primary-green)"></span>起点/终点</div>
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--sky-blue)"></span>途径城市</div>
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--desert-orange)"></span>核心景区</div>
+      <div class="route-map-legend-item"><span class="route-map-legend-dot" style="background:var(--lake-cyan)"></span>自然风光</div>
+    </div>
+  </div>`;
 
   // Booking table
   html += `
