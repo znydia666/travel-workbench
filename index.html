@@ -722,16 +722,16 @@ const DEFAULT_TRIP_DATA = {
     stats: { totalDriveHours: '约43h', totalDistance: '约2500km', avgDrivePerDay: '约4.8h', attractions: '15+' }
   },
 
-  // Cities to monitor weather (QWeather location IDs)
+  // Cities to monitor weather (彩云天气用经纬度)
   monitoredCities: [
-    { name: '乌鲁木齐', locationId: '101130101', dayIdx: 0 },
-    { name: '阿勒泰', locationId: '101131401', dayIdx: 1 },
-    { name: '布尔津', locationId: '101131402', dayIdx: 2 },
-    { name: '克拉玛依', locationId: '101130201', dayIdx: 4 },
-    { name: '博乐', locationId: '101131601', dayIdx: 5 },
-    { name: '新源', locationId: '101131009', dayIdx: 6 },
-    { name: '和静', locationId: '101130608', dayIdx: 7 },
-    { name: '乌鲁木齐', locationId: '101130101', dayIdx: 8 }
+    { name: '乌鲁木齐', lng: 87.6168, lat: 43.8256, dayIdx: 0 },
+    { name: '阿勒泰', lng: 88.1396, lat: 47.8489, dayIdx: 1 },
+    { name: '布尔津', lng: 86.8578, lat: 47.7001, dayIdx: 2 },
+    { name: '克拉玛依', lng: 84.8730, lat: 45.5959, dayIdx: 4 },
+    { name: '博乐', lng: 82.0746, lat: 44.8531, dayIdx: 5 },
+    { name: '新源', lng: 83.2605, lat: 43.4319, dayIdx: 6 },
+    { name: '和静', lng: 86.4096, lat: 42.3136, dayIdx: 7 },
+    { name: '乌鲁木齐', lng: 87.6168, lat: 43.8256, dayIdx: 8 }
   ],
 
   days: [
@@ -1070,103 +1070,25 @@ function saveManualNotifications() {
 
 // ==================== LIVE DATA FETCHING ====================
 
-// ==================== QWEATHER CONFIG ====================
-const QWEATHER_KEY = 'faa5a2d6cea447cf81b64133dfff8ab4';
-const QWEATHER_HOST = 'https://ka4d95dc3u.re.qweatherapi.com';
-let qweatherAvailable = null; // null=unknown, true=available, false=fallback
+// ==================== CAIYUN WEATHER CONFIG ====================
+const CAIYUN_TOKEN = 'TPDkxoNdlCCMTtp3';
+const CAIYUN_HOST = 'https://api.caiyunapp.com';
 
-// Fetch weather from QWeather API, fallback to wttr.in if unavailable
+// 彩云天气 skycon 映射
+const SKYCON_MAP = {
+  'CLEAR_DAY': '晴', 'CLEAR_NIGHT': '晴',
+  'PARTLY_CLOUDY_DAY': '多云', 'PARTLY_CLOUDY_NIGHT': '多云',
+  'CLOUDY': '阴',
+  'LIGHT_HAZE': '轻度雾霾', 'MODERATE_HAZE': '中度雾霾', 'HEAVY_HAZE': '重度雾霾',
+  'LIGHT_RAIN': '小雨', 'MODERATE_RAIN': '中雨', 'HEAVY_RAIN': '大雨', 'STORM_RAIN': '暴雨',
+  'FOG': '雾',
+  'LIGHT_SNOW': '小雪', 'MODERATE_SNOW': '中雪', 'HEAVY_SNOW': '大雪', 'STORM_SNOW': '暴雪',
+  'DUST': '浮尘', 'SAND': '沙尘',
+  'WIND': '大风',
+  'THUNDER_SHOWER': '雷阵雨',
+};
+
 async function fetchWeatherData() {
-  if (qweatherAvailable === null) {
-    qweatherAvailable = await probeQWeather();
-  }
-  if (qweatherAvailable) {
-    try {
-      const data = await fetchQWeatherData();
-      if (data.length > 0) return data;
-    } catch(e) { /* fall through to fallback */ }
-  }
-  return fetchFallbackWeatherData();
-}
-
-async function probeQWeather() {
-  try {
-    const resp = await fetch(`${QWEATHER_HOST}/v7/weather/now?location=101130101&key=${QWEATHER_KEY}`);
-    const data = await resp.json();
-    return data.code === '200';
-  } catch { return false; }
-}
-
-// QWeather API (和风天气)
-async function fetchQWeatherData() {
-  const results = [];
-  const seen = new Set();
-
-  for (const city of tripData.monitoredCities) {
-    if (seen.has(city.locationId)) continue;
-    seen.add(city.locationId);
-    const day = tripData.days[city.dayIdx];
-    const dayLabel = day ? `${day.label} · ${day.date}` : '';
-
-    try {
-      const nowUrl = `${QWEATHER_HOST}/v7/weather/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
-      const nowResp = await fetch(nowUrl);
-      const nowData = await nowResp.json();
-
-      if (nowData.code === '200' && nowData.now) {
-        const n = nowData.now;
-        const desc = n.text;
-        let status = 'normal';
-        let alertIcon = '';
-        if (desc.includes('雨') || desc.includes('雪') || desc.includes('暴')) { status = 'warning'; alertIcon = '⚠️ '; }
-        if (desc.includes('雷') || desc.includes('冰雹') || desc.includes('沙尘')) { status = 'danger'; alertIcon = '🚨 '; }
-        if (parseFloat(n.windSpeed) > 30) { if (status === 'normal') status = 'warning'; if (!alertIcon) alertIcon = '💨 '; }
-
-        results.push({
-          id: `weather-${city.name}`, type: 'weather',
-          title: `${city.name} · ${n.temp}°C`,
-          content: `${alertIcon}${desc} | 体感${n.feelsLike}°C | ${n.windDir}${n.windSpeed}km/h | 湿度${n.humidity}% | 能见度${n.vis}km`,
-          time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto', status, temp: n.temp, desc,
-          dayIdx: city.dayIdx, dayLabel
-        });
-      }
-    } catch (e) { /* skip on error */ }
-  }
-
-  // Fetch warnings
-  const warned = new Set();
-  for (const city of tripData.monitoredCities) {
-    if (warned.has(city.locationId)) continue;
-    warned.add(city.locationId);
-    const day = tripData.days[city.dayIdx];
-    const dayLabel = day ? `${day.label} · ${day.date}` : '';
-    warned.add(city.locationId);
-    try {
-      const warnUrl = `${QWEATHER_HOST}/v7/warning/now?location=${city.locationId}&key=${QWEATHER_KEY}&lang=zh`;
-      const warnResp = await fetch(warnUrl);
-      const warnData = await warnResp.json();
-      if (warnData.code === '200' && warnData.warning) {
-        for (const w of warnData.warning) {
-          const sev = { '蓝色': 'normal', '黄色': 'warning', '橙色': 'danger', '红色': 'danger' };
-          results.push({
-            id: `warning-${city.name}-${w.id}`, type: 'weather',
-            title: `${sev[w.severity] === 'danger' ? '🚨' : '⚠️'} ${city.name} · ${w.typeName}${w.severity}预警`,
-            content: `${w.title} | ${w.text.substring(0, 80)}...`,
-            time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-            source: 'auto', status: sev[w.severity] || 'warning',
-            dayIdx: city.dayIdx, dayLabel
-          });
-        }
-      }
-    } catch (e) { /* skip */ }
-  }
-
-  return results;
-}
-
-// Fallback: public weather API (wttr.in — no key required)
-async function fetchFallbackWeatherData() {
   const results = [];
   const seen = new Set();
 
@@ -1177,21 +1099,28 @@ async function fetchFallbackWeatherData() {
     const dayLabel = day ? `${day.label} · ${day.date}` : '';
 
     try {
-      const resp = await fetch(`https://wttr.in/${encodeURIComponent(city.name)}?format=j1&lang=zh`);
+      const url = `${CAIYUN_HOST}/v2.6/${CAIYUN_TOKEN}/${city.lng},${city.lat}/weather`;
+      const resp = await fetch(url);
       const data = await resp.json();
-      const cur = data.current_condition?.[0];
-      if (cur) {
-        const desc = cur.lang_zh?.[0]?.value || cur.weatherDesc?.[0]?.value || '';
-        let status = 'normal', alertIcon = '';
+
+      if (data.status === 'ok' && data.result?.realtime) {
+        const rt = data.result.realtime;
+        const desc = SKYCON_MAP[rt.skycon] || rt.skycon || '未知';
+        let status = 'normal';
+        let alertIcon = '';
         if (desc.includes('雨') || desc.includes('雪') || desc.includes('暴')) { status = 'warning'; alertIcon = '⚠️ '; }
-        if (desc.includes('雷') || desc.includes('冰雹')) { status = 'danger'; alertIcon = '🚨 '; }
+        if (desc.includes('雷') || desc.includes('冰雹') || desc.includes('沙尘')) { status = 'danger'; alertIcon = '🚨 '; }
+        if (rt.wind?.speed > 30) { if (status === 'normal') status = 'warning'; if (!alertIcon) alertIcon = '💨 '; }
+
+        // 一句话天气摘要
+        const keypad = data.result.forecast_keypoint || '';
 
         results.push({
           id: `weather-${city.name}`, type: 'weather',
-          title: `${city.name} · ${cur.temp_C}°C`,
-          content: `${alertIcon}${desc} | 风力: ${cur.winddir16Point} ${cur.windspeedKmph}km/h | 湿度: ${cur.humidity}%`,
+          title: `${city.name} · ${rt.temperature.toFixed(0)}°C`,
+          content: `${alertIcon}${desc} | 体感${rt.apparent_temperature.toFixed(0)}°C | 风${rt.wind.speed.toFixed(1)}m/s | 湿度${(rt.humidity*100).toFixed(0)}%${keypad ? ' | '+keypad : ''}`,
           time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          source: 'auto', status, temp: cur.temp_C, desc,
+          source: 'auto', status, temp: rt.temperature.toFixed(0), desc,
           dayIdx: city.dayIdx, dayLabel
         });
       }
